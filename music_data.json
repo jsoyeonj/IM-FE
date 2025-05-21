@@ -58,5 +58,15 @@
     "created_at": "2025-05-21T19:45:19.074666",
     "file_path": "1d8bfde3-e539-4f87-9d30-1ab74a2346cd.mp3",
     "user_id": "anonymous"
+  },
+  {
+    "id": "4004e558-c8a9-41ae-98ed-5a14d81bf66f",
+    "title": "편안한 분위기의 산책 음악",
+    "tempo": "83",
+    "mood": "편안한",
+    "location": "산책",
+    "created_at": "2025-05-21T23:20:42.245968",
+    "file_path": "4004e558-c8a9-41ae-98ed-5a14d81bf66f.mp3",
+    "user_id": "anonymous"
   }
 ]
