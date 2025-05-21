@@ -158,6 +158,75 @@ def generate_music():
         all_music.append(music_data)
         save_music_data(all_music)
 
+        return jsonify({
+            'success': True,
+            'music_id': music_id,
+            'next_step': url_for('detail_input', music_id=music_id)
+        })
+
+    return jsonify({'success': False, 'error': 'Invalid request method'})
+
+
+# 상세 내용 포함한 음악 생성 API
+@app.route('/generate-music-with-detail', methods=['POST'])
+def generate_music_with_detail():
+    """상세 내용을 반영한 음악 생성 API"""
+    if request.method == 'POST':
+        data = request.get_json()
+
+        # 필수 파라미터 확인
+        if 'detail_text' not in data:
+            return jsonify({'success': False, 'error': '상세 내용이 필요합니다'}), 400
+
+        detail_text = data.get('detail_text')
+        music_id = data.get('music_id', '')  # 기존 음악 ID (있을 경우)
+
+        # 데모용: 실제로는 여기서 AI 모델로 음악을 생성하거나 기존 음악을 수정
+        if music_id:
+            # 기존 음악 데이터 조회 (있을 경우)
+            music_list = load_music_data()
+            music_data = None
+
+            for music in music_list:
+                if music['id'] == music_id:
+                    music_data = music
+                    break
+
+            if not music_data:
+                # 기존 음악을 찾지 못한 경우 새로 생성
+                music_id = str(uuid.uuid4())
+        else:
+            # 새로운 음악 ID 생성
+            music_id = str(uuid.uuid4())
+
+        created_at = datetime.datetime.now().isoformat()
+
+        # 상세 내용을 포함한 음악 정보 생성
+        new_music_data = {
+            'id': music_id,
+            'title': f"{detail_text[:20]}{'...' if len(detail_text) > 20 else ''}",
+            'detail_text': detail_text,
+            'created_at': created_at,
+            'file_path': f'{music_id}.mp3',
+            'user_id': session.get('user_id', 'anonymous')
+        }
+
+        # 기존 데이터에 덮어쓰거나 새로 추가
+        music_list = load_music_data()
+
+        if music_id and any(music['id'] == music_id for music in music_list):
+            # 기존 음악 업데이트
+            for i, music in enumerate(music_list):
+                if music['id'] == music_id:
+                    # 기존 데이터 유지하면서 새 데이터로 업데이트
+                    music_list[i].update(new_music_data)
+                    break
+        else:
+            # 새 음악 추가
+            music_list.append(new_music_data)
+
+        save_music_data(music_list)
+
         return jsonify({'success': True, 'music_id': music_id})
 
     return jsonify({'success': False, 'error': 'Invalid request method'})
@@ -306,6 +375,25 @@ def image_create():
     user_picture = session.get('user_picture', '')
 
     return render_template('image_create.html',
+                           logged_in=logged_in,
+                           user_name=user_name,
+                           user_picture=user_picture)
+
+
+# 더 원하는 내용 작성 페이지 라우트
+@app.route('/detail-input')
+def detail_input():
+    """추가 내용 작성 페이지"""
+    # URL 파라미터에서 music_id 가져오기
+    music_id = request.args.get('music_id', '')
+
+    # 로그인 상태 확인
+    logged_in = 'user_id' in session
+    user_name = session.get('user_name', '')
+    user_picture = session.get('user_picture', '')
+
+    return render_template('detail_input.html',
+                           music_id=music_id,
                            logged_in=logged_in,
                            user_name=user_name,
                            user_picture=user_picture)

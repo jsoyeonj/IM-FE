@@ -1,0 +1,383 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Pretendard variable', sans-serif;
+  height: 100vh;
+}
+
+/* 전체 컨테이너 */
+.create-container {
+  width: 100%;
+  height: 100vh;
+  background: linear-gradient(119deg, #fff 0%, #dfd0ff 46%, #faf7ff 100%, #cc46b7 100%);
+  background-size: cover;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 로고 버튼 */
+.back-button {
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: 2rem 0 0 4rem;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.back-button p {
+  font-size: 2rem;
+  font-weight: 300;
+  color: #000;
+  letter-spacing: 0.125rem;
+  text-transform: capitalize;
+}
+
+/* 콘텐츠 영역 */
+.content-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding-top: 5rem;
+}
+
+/* 상단 섹션 */
+.left-section {
+  position: relative;
+  padding-left: 8rem;
+  padding-bottom: 2rem;
+  width: 100%;
+  margin-top: 60px; /* 더 위로 올림 */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* 타이틀 영역 */
+.title-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.title {
+  color: #513d6c;
+  font-size: 2rem;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.subtitle {
+  color: #513d6c;
+  font-size: 1rem;
+  font-weight: 300;
+  margin-top: 0.5rem;
+}
+
+.image-gen-btn {
+  width: 12rem;
+  height: 2.5rem;
+  border: none;
+  border-radius: 1.25rem;
+  background: #fff;
+  margin-top: 1.5rem;
+  box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  color: #513d6c;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.image-gen-btn:hover {
+  transform: scale(1.05);
+  background: #f8f8f8;
+}
+
+/* 레코드 영역 - 위로 올림 */
+.right-section {
+  position: absolute;
+  left: 25rem;
+  top: -50px; /* 0에서 -50px로 변경하여 위로 올림 */
+  z-index: 1;
+}
+
+/* 레코드 이미지 */
+.record-img {
+  width: 20rem;
+  height: auto;
+  transition: transform 2s ease-in-out;
+}
+
+.record-img:hover {
+  transform: rotate(360deg);
+}
+
+/* 재생 버튼 */
+.play-btn {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5rem;
+  height: 5rem;
+  background-color: #3d1655;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.3s ease;
+  z-index: 2; /* 레이어 순서 높임 */
+}
+
+.play-btn:hover {
+  transform: translateX(-50%) scale(1.1);
+}
+
+.play-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-left: 0.2rem;
+}
+
+/* 추가 내용 입력 영역 - 위치 유지 */
+.detail-input-area {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-top: auto;
+  margin-bottom: auto;
+  padding-left: 8rem;
+  position: relative;
+  z-index: 2;
+  margin-top: 80px; /* 위치 유지 */
+}
+
+.input-container {
+  width: 80%;
+  max-width: 800px;
+  background-color: #946ec4;
+  border-radius: 20px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.input-label {
+  color: #ffffff;
+  font-size: 1.3rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.detail-input {
+  width: 90%;
+  height: 3rem;
+  border: none;
+  border-radius: 10px;
+  padding: 0 1rem;
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.detail-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+}
+
+.generate-btn {
+  width: 50%;
+  height: 3rem;
+  border: none;
+  border-radius: 1.5rem;
+  background-color: #fff;
+  color: #513d6c;
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.generate-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* 메시지 스타일 */
+.message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 15px 20px;
+  border-radius: 8px;
+  color: white;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: opacity 0.3s, transform 0.3s;
+  z-index: 1000;
+}
+
+.message.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.message.success {
+  background-color: #4caf50;
+}
+
+.message.error {
+  background-color: #f44336;
+}
+
+.message.info {
+  background-color: #2196f3;
+}
+
+/* 반응형 스타일 */
+@media (max-width: 1200px) {
+  .left-section {
+    padding-left: 4rem;
+    margin-top: 50px; /* 조정 */
+  }
+
+  .right-section {
+    left: 20rem;
+    top: -40px; /* 조정 */
+  }
+
+  .detail-input-area {
+    padding-left: 4rem;
+    margin-top: 70px; /* 유지 */
+  }
+
+  .record-img {
+    width: 18rem;
+  }
+
+  .input-container {
+    width: 90%;
+  }
+}
+
+@media (max-width: 900px) {
+  .left-section {
+    padding-left: 2rem;
+    margin-bottom: 2rem;
+    margin-top: 40px; /* 조정 */
+  }
+
+  .right-section {
+    position: relative;
+    left: 0;
+    top: -30px; /* 조정 */
+    margin: 2rem auto;
+  }
+
+  .detail-input-area {
+    padding-left: 2rem;
+    justify-content: center;
+    margin-top: 60px; /* 유지 */
+  }
+
+  .record-img {
+    width: 15rem;
+  }
+
+  .input-container {
+    width: 90%;
+    padding: 1.5rem;
+  }
+
+  .input-label {
+    font-size: 1.1rem;
+  }
+
+  .detail-input {
+    width: 100%;
+  }
+
+  .generate-btn {
+    width: 80%;
+  }
+
+  .back-button {
+    margin: 1.5rem 0 0 2rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .content-wrapper {
+    padding-top: 4rem;
+  }
+
+  .left-section {
+    margin-top: 30px; /* 조정 */
+  }
+
+  .title-section {
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .image-gen-btn {
+    width: 10rem;
+    font-size: 0.8rem;
+  }
+
+  .right-section {
+    top: -20px; /* 조정 */
+  }
+
+  .record-img {
+    width: 12rem;
+  }
+
+  .play-btn {
+    width: 4rem;
+    height: 4rem;
+  }
+
+  .detail-input-area {
+    margin-top: 50px; /* 유지 */
+  }
+
+  .input-container {
+    padding: 1rem;
+  }
+
+  .input-label {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .detail-input {
+    height: 2.5rem;
+    font-size: 0.9rem;
+  }
+
+  .generate-btn {
+    height: 2.5rem;
+    font-size: 1rem;
+  }
+
+  .back-button p {
+    font-size: 1.5rem;
+  }
+}

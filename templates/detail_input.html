@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Croffle - 추가 내용 작성{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/detail_input.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="create-container">
+    <!-- 로고 링크 (왼쪽 상단) -->
+    <div class="back-button" onclick="window.location.href='{{ url_for('index') }}'">
+        <p>Croffle</p>
+    </div>
+
+    <div class="content-wrapper">
+        <!-- 왼쪽 섹션: 타이틀 영역 -->
+        <div class="left-section">
+            <div class="title-section">
+                <h1 class="title">음악<br>생성하기</h1>
+                <p class="subtitle">Music Generation</p>
+                <button class="image-gen-btn" id="imageGenBtn" onclick="window.location.href='{{ url_for('image_create') }}'">이미지로 음악 생성하기</button>
+            </div>
+
+            <!-- 레코드 영역 (원모양 재생 버튼) -->
+            <div class="right-section">
+                <img src="{{ url_for('static', filename='images/record.svg') }}" alt="레코드" class="record-img">
+                <button class="play-btn" id="playBtn">
+                    <img src="{{ url_for('static', filename='images/playIcon.svg') }}" alt="재생" class="play-icon">
+                </button>
+            </div>
+        </div>
+
+        <!-- 추가 내용 입력 영역 -->
+        <div class="detail-input-area">
+            <div class="input-container">
+                <p class="input-label">더 원하는 내용을 작성해주세요.</p>
+                <input type="text" id="detailInput" placeholder="예시 : 유튜브에 사용할 광활한 음악" class="detail-input">
+                <button class="generate-btn" id="generateBtn">음악 생성하기</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/detail_input.js') }}"></script>
+{% endblock %}
