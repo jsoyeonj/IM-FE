@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Croffle - 로그인{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-box">
+        <h1 class="login-title">Croffle</h1>
+        <p class="login-subtitle">로그인하여 계속하세요</p>
+
+        {% if error %}
+        <div class="error-message">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form action="{{ url_for('login') }}" method="post" class="login-form">
+            <a href="{{ url_for('index') }}" class="back-link">← 홈으로 돌아가기</a>
+
+            <button type="submit" class="google-login-button">
+                <img src="{{ url_for('static', filename='images/google.png') }}" alt="Google Logo" class="google-icon">
+                Google로 로그인
+            </button>
+        </form>
+
+        <p class="login-info">
+            로그인하면 Croffle의 <a href="#">이용약관</a>과 <a href="#">개인정보처리방침</a>에 동의하게 됩니다.
+        </p>
+    </div>
+</div>
+{% endblock %}

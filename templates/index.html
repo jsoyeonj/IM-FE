@@ -1,0 +1,25 @@
+
+{% extends "base.html" %}
+
+{% block title %}Croffle - 하나뿐인 작업곡을 만들어보세요{% endblock %}
+
+{% block content %}
+<div class="main-container">
+    <div class="bg-container">
+        <div class="content-wrapper">
+            <h1 class="main-title">Croffle</h1>
+            <h2 class="sub-title">하나뿐인 작업곡을 만들어보세요</h2>
+            
+            <a href="{{ url_for('create') }}" class="start-button">
+                <img src="{{ url_for('static', filename='images/startImg.png') }}" alt="play" class="button-icon">
+                <p class="button-text">Get Started</p>
+            </a>
+            
+            <a href="{{ url_for('login') }}" class="login-button">
+                <img src="{{ url_for('static', filename='images/google.png') }}" alt="Google Logo" class="button-icon-small">
+                <p class="button-text-small">Login With Google</p>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

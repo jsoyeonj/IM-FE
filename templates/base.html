@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Croffle{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/vite.svg') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block additional_css %}{% endblock %}
+    <style>
+        /* 메시지 스타일 */
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 1000;
+        }
+
+        .message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .message.success {
+            background-color: #4caf50;
+        }
+
+        .message.error {
+            background-color: #f44336;
+        }
+
+        /* 헤더 메뉴 스타일 */
+        .header-menu {
+            position: fixed;
+            top: 20px;
+            right: 30px;
+            display: flex;
+            gap: 15px;
+            z-index: 100;
+        }
+
+        .header-menu a {
+            color: #513d6c;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 15px;
+            border-radius: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            transition: background-color 0.3s;
+        }
+
+        .header-menu a:hover {
+            background-color: white;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #513d6c;
+            font-weight: 500;
+            padding: 8px 15px;
+            border-radius: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+
+        .user-profile img {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    {% if request.path != '/' and request.path != '/login' %}
+    <div class="header-menu">
+        {% if logged_in %}
+            <div class="user-profile">
+                {% if user_picture %}
+                <img src="{{ user_picture }}" alt="프로필">
+                {% else %}
+                <img src="{{ url_for('static', filename='images/user.png') }}" alt="프로필">
+                {% endif %}
+                <span>{{ user_name }}</span>
+            </div>
+            <a href="{{ url_for('playlist') }}">내 작업곡</a>
+            <a href="{{ url_for('logout') }}">로그아웃</a>
+        {% else %}
+            <a href="{{ url_for('login') }}">로그인</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div id="root">
+        {% block content %}{% endblock %}
+    </div>
+
+    {% block scripts %}
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% endblock %}
+</body>
+</html>

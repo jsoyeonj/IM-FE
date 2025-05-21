@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Croffle - 음악 생성{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/create.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="create-container">
+    <div class="back-button" onclick="window.location.href='{{ url_for('index') }}'">
+        <p>croffle</p>
+    </div>
+
+    <div class="content-wrapper">
+        <div class="row-container">
+            <!-- 음악 컨트롤러 섹션 -->
+            <div class="controller">
+                <h2 class="controller-title">Music Speed</h2>
+                <p class="controller-subtitle">곡의 빠르기를 조절해주세요</p>
+
+                <input
+                    type="range"
+                    min="60"
+                    max="180"
+                    value="120"
+                    class="music-speed-input"
+                    id="tempoSlider"
+                >
+
+                <div class="controller-value-container">
+                    <p class="controller-value" id="tempoValue">120 BPM</p>
+                </div>
+
+                <button class="create-button" id="createMusicBtn">생성</button>
+            </div>
+
+            <!-- 플레이리스트 섹션 -->
+            <div class="playlist-container">
+                <h2 class="section-title">내 작업곡</h2>
+                <div class="music-list" id="musicList">
+                    <!-- 음악 항목들이 동적으로 추가됨 -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/create.js') }}"></script>
+{% endblock %}

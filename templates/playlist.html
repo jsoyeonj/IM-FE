@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Croffle - 내 작업곡{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/playlist.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="playlist-page-container">
+    <div class="back-button" onclick="window.location.href='{{ url_for('index') }}'">
+        <p>croffle</p>
+    </div>
+
+    <div class="content-wrapper">
+        <h1 class="playlist-title">내 작업곡</h1>
+
+        {% if music_list %}
+            <div class="music-list">
+                {% for music in music_list %}
+                <div class="music-container" data-id="{{ music.id }}">
+                    <div class="column-box">
+                        <h3>{{ music.title or '제목 없음' }}</h3>
+                        <p>BPM: {{ music.tempo }}</p>
+                        <p>생성일: {{ music.created_at|format_date }}</p>
+                    </div>
+                    <div class="music-controls">
+                        <button class="play-btn" onclick="playMusic('{{ music.id }}')">
+                            <img src="{{ url_for('static', filename='images/play.png') }}" alt="재생" width="24">
+                        </button>
+                        <button class="download-btn" onclick="downloadMusic('{{ music.id }}')">
+                            <img src="{{ url_for('static', filename='images/download.png') }}" alt="다운로드" width="24">
+                        </button>
+                        <button class="delete-btn" onclick="deleteMusic('{{ music.id }}')">
+                            <img src="{{ url_for('static', filename='images/delete.png') }}" alt="삭제" width="24">
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-music-container">
+                <p>아직 생성된 작업곡이 없습니다.</p>
+                <a href="{{ url_for('create') }}" class="create-link-button">
+                    새 음악 만들기
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/playlist.js') }}"></script>
+{% endblock %}
