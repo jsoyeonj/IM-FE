@@ -164,10 +164,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 이미지로 음악 생성 버튼 이벤트
     if (imageGenBtn) {
-        imageGenBtn.addEventListener('click', function() {
-            showMessage('이미지로 음악 생성 기능은 준비 중입니다', 'info');
-        });
-    }
+    imageGenBtn.addEventListener('click', function() {
+        window.location.href = '/image-create';
+    });
+}
 
     // 컨트롤러 강조 효과
     function highlightController(controller) {

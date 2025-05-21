@@ -1,0 +1,395 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Pretendard variable', sans-serif;
+  height: 100vh;
+}
+
+/* 전체 컨테이너 */
+.create-container {
+  width: 100%;
+  height: 100vh;
+  background: linear-gradient(119deg, #fff 0%, #dfd0ff 46%, #faf7ff 100%, #cc46b7 100%);
+  background-size: cover;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 로고 버튼 */
+.back-button {
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: 2rem 0 0 4rem;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.back-button p {
+  font-size: 2rem;
+  font-weight: 300;
+  color: #000;
+  letter-spacing: 0.125rem;
+  text-transform: capitalize;
+}
+
+/* 메인 콘텐츠 영역 */
+.main-content {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 120px;
+  padding-left: 8rem;
+}
+
+/* 왼쪽 섹션 */
+.left-section {
+  position: relative;
+  padding-bottom: 2rem;
+  width: 100%;
+}
+
+/* 타이틀 영역 */
+.title-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.title {
+  color: #513d6c;
+  font-size: 2rem;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.subtitle {
+  color: #513d6c;
+  font-size: 1rem;
+  font-weight: 300;
+  margin-top: 0.5rem;
+}
+
+.direct-gen-btn {
+  width: 12rem;
+  height: 2.5rem;
+  border: none;
+  border-radius: 1.25rem;
+  background: #fff;
+  margin-top: 1.5rem;
+  box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  color: #513d6c;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.direct-gen-btn:hover {
+  transform: scale(1.05);
+  background: #f8f8f8;
+}
+
+/* 레코드 영역 */
+.right-section {
+  position: absolute;
+  left: 16rem;
+  top: 0;
+}
+
+/* 레코드 이미지 */
+.record-img {
+  width: 20rem;
+  height: auto;
+  transition: transform 2s ease-in-out;
+}
+
+.record-img:hover {
+  transform: rotate(360deg);
+}
+
+/* 재생 버튼 */
+.play-btn {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5rem;
+  height: 5rem;
+  background-color: #3d1655;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.3s ease;
+}
+
+.play-btn:hover {
+  transform: translateX(-50%) scale(1.1);
+}
+
+.play-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-left: 0.2rem;
+}
+
+/* 이미지 업로드 영역 */
+.upload-wrapper {
+  position: absolute;
+  bottom: 10%;
+  left: 8rem;  /* "음악 생성하기"와 동일한 위치에 정렬 */
+  width: 80%;
+  max-width: 800px;
+}
+
+.image-upload-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 8rem;
+  background: white;
+  border-radius: 2rem;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.image-upload-area:hover {
+  transform: scale(1.02);
+  box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.2);
+}
+
+.image-upload-area.uploaded {
+  background-color: #946ec4;
+}
+
+.image-input {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 3;
+}
+
+.upload-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  width: 100%;
+  height: 100%;
+}
+
+.upload-content.uploaded {
+  flex-direction: column;
+}
+
+.upload-icon {
+  width: 3rem;
+  height: 3rem;
+}
+
+.upload-text {
+  color: #513d6c;
+  font-size: 1.3rem;
+  font-weight: 500;
+}
+
+.upload-text.uploaded {
+  color: white;
+}
+
+/* 업로드된 이미지 스타일 */
+.preview-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 1rem;
+}
+
+.preview-img-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.preview-img {
+  max-width: 150px;
+  height: auto;
+  max-height: 4rem;
+  object-fit: contain;
+  border-radius: 0.5rem;
+}
+
+/* 업로드된 이미지 미리보기 영역 */
+.preview-container {
+  position: absolute;
+  bottom: 1rem;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.image-preview {
+  width: 80%;
+  max-height: 150px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.5rem;
+  overflow-y: auto;
+}
+
+.preview-image {
+  max-width: 10rem;
+  max-height: 8rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* 메시지 스타일 */
+.message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 15px 20px;
+  border-radius: 8px;
+  color: white;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: opacity 0.3s, transform 0.3s;
+  z-index: 1000;
+}
+
+.message.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.message.success {
+  background-color: #4caf50;
+}
+
+.message.error {
+  background-color: #f44336;
+}
+
+.message.info {
+  background-color: #2196f3;
+}
+
+/* 반응형 스타일 */
+@media (max-width: 1200px) {
+  .main-content {
+    padding-left: 4rem;
+  }
+
+  .right-section {
+    left: auto;
+    right: 4rem;
+    top: 0;
+  }
+
+  .upload-wrapper {
+    left: 4rem;  /* 반응형에서도 동일하게 왼쪽 정렬 유지 */
+    width: calc(100% - 8rem);
+  }
+
+  .record-img {
+    width: one(8rem);
+  }
+}
+
+@media (max-width: 900px) {
+  .main-content {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0 2rem;
+  }
+
+  .left-section {
+    width: 100%;
+    margin-bottom: 2rem;
+  }
+
+  .right-section {
+    position: relative;
+    left: 0;
+    right: 0;
+    top: 0;
+    margin: 2rem auto;
+  }
+
+  .upload-wrapper {
+    position: relative;
+    left: 2rem;  /* 모바일에서도 왼쪽 정렬 */
+    width: calc(100% - 4rem);
+    bottom: auto;
+    margin: 2rem 0;
+  }
+
+  .back-button {
+    margin: 1.5rem 0 0 2rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .main-content {
+    margin-top: 80px;
+  }
+
+  .title-section {
+    align-items: flex-start;  /* 왼쪽 정렬 유지 */
+    width: 100%;
+  }
+
+  .record-img {
+    width: 15rem;
+  }
+
+  .play-btn {
+    width: 4rem;
+    height: 4rem;
+  }
+
+  .image-upload-area {
+    height: 7rem;
+  }
+
+  .upload-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .upload-text {
+    font-size: 1.1rem;
+  }
+
+  .back-button p {
+    font-size: 1.5rem;
+  }
+}

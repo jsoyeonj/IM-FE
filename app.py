@@ -7,11 +7,17 @@ import requests
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 import secrets
+import random
 
 # .env 파일 로드
 load_dotenv()
+# 개발 환경에서는 HTTPS 요구사항 비활성화 (로컬 개발용)
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 app = Flask(__name__)
+UPLOAD_FOLDER = 'uploads'
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 app.secret_key = os.getenv('FLASK_SECRET_KEY', secrets.token_hex(16))  # 세션 관리를 위한 비밀키
 
 # Google OAuth 설정
@@ -157,6 +163,94 @@ def generate_music():
     return jsonify({'success': False, 'error': 'Invalid request method'})
 
 
+# 이미지로부터 음악 생성 API
+@app.route('/generate-music-from-image', methods=['POST'])
+def generate_music_from_image():
+    # 로그인 확인 (선택적)
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'error': '로그인이 필요합니다'})
+
+    try:
+        # 이미지 파일 확인
+        if 'image' not in request.files:
+            return jsonify({'success': False, 'error': '이미지 파일이 필요합니다'})
+
+        image_file = request.files['image']
+
+        if image_file.filename == '':
+            return jsonify({'success': False, 'error': '파일이 선택되지 않았습니다'})
+
+        # 허용된 확장자 확인
+        allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
+        if not ('.' in image_file.filename and image_file.filename.rsplit('.', 1)[1].lower() in allowed_extensions):
+            return jsonify({'success': False, 'error': '허용되지 않는 파일 형식입니다'})
+
+        # 이미지 저장 (필요한 경우)
+        filename = secure_filename(image_file.filename)
+        image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        image_file.save(image_path)
+
+        # 여기에 이미지 분석 및 음악 생성 로직을 구현
+        # 이 예제에서는 더미 데이터를 사용합니다
+
+        # 새 음악 데이터 생성
+        user_id = session['user_id']
+        title = f"이미지 음악 {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        mood = "이미지 기반"  # 실제 분석에 기반하여 설정
+        location = "이미지"  # 실제 분석에 기반하여 설정
+        tempo = random.randint(60, 180)  # 실제 분석에 기반하여 설정
+
+        # 데이터베이스에 음악 정보 저장
+        music_id = str(uuid.uuid4())
+
+        # 여기에서 이미지 분석 기반으로 실제 음악 파일을 생성 (MIDI, MP3 등)
+        # 실제 구현에서는 여기에 음악 생성 코드를 추가합니다
+        music_file_path = f"music_{music_id}.mp3"
+
+        # 파일 시스템에 가짜 음악 파일을 생성 (실제 구현에서는 이 부분을 대체)
+        # 이 부분은 실제 음악 생성 API를 사용할 때 대체됩니다
+        with open(os.path.join(app.config['UPLOAD_FOLDER'], music_file_path), 'wb') as f:
+            f.write(b'dummy_audio_data')  # 실제 구현에서는 실제 오디오 데이터로 대체
+
+        # 데이터베이스 저장 로직
+        # 기존 코드에서 사용하는 데이터베이스 형식에 맞게 수정하세요
+        # 예: MongoDB, SQLite, MySQL 등
+
+        # 음악 데이터를 저장하는 데이터베이스 코드를 여기에 추가하세요
+        # 예시 (JSON 파일에 저장하는 방식):
+        music_data_file = 'music_data.json'
+
+        # 기존 데이터 로드
+        if os.path.exists(music_data_file):
+            with open(music_data_file, 'r', encoding='utf-8') as f:
+                music_list = json.load(f)
+        else:
+            music_list = []
+
+        # 새 음악 추가
+        new_music = {
+            'id': music_id,
+            'user_id': user_id,
+            'title': title,
+            'mood': mood,
+            'location': location,
+            'tempo': tempo,
+            'file_path': music_file_path,
+            'created_at': datetime.datetime.now().isoformat()
+        }
+
+        music_list.append(new_music)
+
+        # 데이터 저장
+        with open(music_data_file, 'w', encoding='utf-8') as f:
+            json.dump(music_list, f, ensure_ascii=False, indent=4)
+
+        return jsonify({'success': True, 'music_id': music_id})
+
+    except Exception as e:
+        print(f"Error generating music from image: {e}")  # 디버깅을 위한 로그
+        return jsonify({'success': False, 'error': str(e)})
+
 @app.route('/upload', methods=['POST'])
 def upload_file():
     """음악 파일 업로드 처리"""
@@ -202,6 +296,19 @@ def playlist():
 
     return render_template('playlist.html', music_list=music_list, music=selected_music)
 
+
+# 이미지 기반 음악 생성 페이지로 라우팅
+@app.route('/image-create')
+def image_create():
+    # 로그인 상태 확인
+    logged_in = 'user_id' in session
+    user_name = session.get('user_name', '')
+    user_picture = session.get('user_picture', '')
+
+    return render_template('image_create.html',
+                           logged_in=logged_in,
+                           user_name=user_name,
+                           user_picture=user_picture)
 
 @app.route('/play/<music_id>')
 def play_music(music_id):

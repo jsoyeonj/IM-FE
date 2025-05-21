@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 
 # .env 파일 로드
 load_dotenv()
+# 개발 환경에서는 HTTPS 요구사항 비활성화 (로컬 개발용)
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 # Google OAuth 설정
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
