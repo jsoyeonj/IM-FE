@@ -8,41 +8,83 @@
 
 {% block content %}
 <div class="create-container">
+    <!-- 로고 링크 (왼쪽 상단) -->
     <div class="back-button" onclick="window.location.href='{{ url_for('index') }}'">
-        <p>croffle</p>
+        <p>Croffle</p>
     </div>
 
     <div class="content-wrapper">
-        <div class="row-container">
-            <!-- 음악 컨트롤러 섹션 -->
+        <!-- 왼쪽 섹션: 타이틀 영역 -->
+        <div class="left-content">
+            <div class="title-section">
+                <h1 class="title">음악<br>생성하기</h1>
+                <p class="subtitle">Music Generation</p>
+                <button class="image-gen-btn" id="imageGenBtn">이미지로 음악 생성하기</button>
+            </div>
+        </div>
+
+        <!-- 중앙 영역: 레코드와 재생 버튼 -->
+        <div class="center-content">
+            <img src="{{ url_for('static', filename='images/record.svg') }}" alt="레코드" class="record-img">
+            <button class="play-btn" id="playBtn">
+                <img src="{{ url_for('static', filename='images/playIcon.svg') }}" alt="재생" class="play-icon">
+            </button>
+        </div>
+
+        <!-- 하단 영역: 컨트롤러 모음 -->
+        <div class="controllers-area">
+            <!-- 컨트롤러 1: 스피드 설정 -->
             <div class="controller">
-                <h2 class="controller-title">Music Speed</h2>
-                <p class="controller-subtitle">곡의 빠르기를 조절해주세요</p>
-
-                <input
-                    type="range"
-                    min="60"
-                    max="180"
-                    value="120"
-                    class="music-speed-input"
-                    id="tempoSlider"
-                >
-
-                <div class="controller-value-container">
-                    <p class="controller-value" id="tempoValue">120 BPM</p>
+                <p class="controller-number">01</p>
+                <p class="controller-label">스피드</p>
+                <div class="slider-container">
+                    <input type="range" min="1" max="100" value="50" class="music-speed-input" id="speedSlider">
+                    <div class="slider-labels">
+                        <p class="label">Slow</p>
+                        <p class="label">Fast</p>
+                    </div>
                 </div>
-
-                <button class="create-button" id="createMusicBtn">생성</button>
             </div>
 
-            <!-- 플레이리스트 섹션 -->
-            <div class="playlist-container">
-                <h2 class="section-title">내 작업곡</h2>
-                <div class="music-list" id="musicList">
-                    <!-- 음악 항목들이 동적으로 추가됨 -->
+            <!-- 컨트롤러 2: 분위기 설정 -->
+            <div class="controller">
+                <p class="controller-number">02</p>
+                <p class="controller-label">분위기</p>
+                <div class="button-grid">
+                    <div class="button-row">
+                        <button class="create-button" data-value="편안한">편안한</button>
+                        <button class="create-button" data-value="신나는">신나는</button>
+                    </div>
+                    <div class="button-row">
+                        <button class="create-button" data-value="잔잔한">잔잔한</button>
+                        <button class="create-button" data-value="흥겨운">흥겨운</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 컨트롤러 3: 장소 설정 -->
+            <div class="controller">
+                <p class="controller-number">03</p>
+                <p class="controller-label">장소</p>
+                <div class="button-grid">
+                    <div class="button-row">
+                        <button class="create-button" data-value="집">집</button>
+                        <button class="create-button" data-value="카페">카페</button>
+                    </div>
+                    <div class="button-row">
+                        <button class="create-button" data-value="산책">산책</button>
+                        <button class="create-button" data-value="운동">운동</button>
+                    </div>
+                    <div class="button-row">
+                        <button class="create-button" data-value="학교">학교</button>
+                        <button class="create-button" data-value="산">산</button>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <!-- 다음 단계 버튼 (오른쪽) -->
+        <div class="next-step-btn" id="nextStepBtn">다음 단계</div>
     </div>
 </div>
 {% endblock %}

@@ -31,6 +31,10 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
 if not os.path.exists(app.config['MUSIC_FOLDER']):
     os.makedirs(app.config['MUSIC_FOLDER'])
 
+# 이미지 폴더 확인 및 생성
+if not os.path.exists('static/images'):
+    os.makedirs('static/images')
+
 # 음악 데이터를 저장할 JSON 파일 경로
 MUSIC_DATA_FILE = 'music_data.json'
 
@@ -77,7 +81,7 @@ def create():
         data = request.get_json()
 
         # 필수 파라미터 확인
-        required_params = ['tempo', 'mood', 'place']
+        required_params = ['speed', 'mood', 'location']
         missing_params = [param for param in required_params if param not in data]
 
         if missing_params:
@@ -94,10 +98,10 @@ def create():
         # 음악 정보 저장
         music_data = {
             'id': music_id,
-            'title': f'{data["mood"]} 분위기의 {data["place"]} 음악',
-            'tempo': data['tempo'],
+            'title': f'{data["mood"]} 분위기의 {data["location"]} 음악',
+            'speed': data['speed'],
             'mood': data['mood'],
-            'place': data['place'],
+            'location': data['location'],
             'created_at': created_at,
             'file_path': f'{music_id}.mp3',
             'user_id': session.get('user_id', 'anonymous')
@@ -113,11 +117,44 @@ def create():
 
         return jsonify({
             'success': True,
-            'music': music_data
+            'music': music_data,
+            'music_id': music_id
         })
 
     # GET 요청인 경우 페이지 렌더링
     return render_template('create.html')
+
+
+@app.route('/generate-music', methods=['POST'])
+def generate_music():
+    """음악 생성 API 엔드포인트 (create와 동일한 기능이지만 다른 파라미터 처리)"""
+    if request.method == 'POST':
+        data = request.json
+
+        # 데모용: 실제로는 여기서 AI 모델로 음악을 생성하거나 파일을 처리
+        music_id = str(uuid.uuid4())
+        created_at = datetime.datetime.now().isoformat()
+
+        # 선택된 옵션으로 음악 정보 생성
+        music_data = {
+            'id': music_id,
+            'title': f"{data.get('mood')} 분위기의 {data.get('location')} 음악",
+            'tempo': data.get('speed', 0),
+            'mood': data.get('mood', '편안한'),
+            'location': data.get('location', '집'),
+            'created_at': created_at,
+            'file_path': f'{music_id}.mp3',
+            'user_id': session.get('user_id', 'anonymous')
+        }
+
+        # 음악 데이터 목록에 추가
+        all_music = load_music_data()
+        all_music.append(music_data)
+        save_music_data(all_music)
+
+        return jsonify({'success': True, 'music_id': music_id})
+
+    return jsonify({'success': False, 'error': 'Invalid request method'})
 
 
 @app.route('/upload', methods=['POST'])
@@ -145,6 +182,17 @@ def playlist():
     # 모든 음악 목록 로드
     music_list = load_music_data()
 
+    # URL 파라미터에서 music_id를 확인
+    music_id = request.args.get('music_id')
+
+    # 특정 music_id가 지정된 경우 해당 음악 정보를 찾음
+    selected_music = None
+    if music_id:
+        for music in music_list:
+            if music['id'] == music_id:
+                selected_music = music
+                break
+
     # 로그인한 사용자의 음악만 필터링 (로그인 상태라면)
     if 'user_id' in session:
         music_list = [music for music in music_list if music['user_id'] == session['user_id']]
@@ -152,7 +200,7 @@ def playlist():
     # 생성일 기준 내림차순 정렬
     music_list.sort(key=lambda x: x['created_at'], reverse=True)
 
-    return render_template('playlist.html', music_list=music_list)
+    return render_template('playlist.html', music_list=music_list, music=selected_music)
 
 
 @app.route('/play/<music_id>')
