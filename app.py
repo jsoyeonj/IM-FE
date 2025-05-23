@@ -320,6 +320,92 @@ def generate_music_from_image():
         print(f"Error generating music from image: {e}")  # 디버깅을 위한 로그
         return jsonify({'success': False, 'error': str(e)})
 
+# 동영상으로부터 음악 생성 API
+@app.route('/generate-music-from-video', methods=['POST'])
+def generate_music_from_video():
+    # 로그인 확인 (선택적)
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'error': '로그인이 필요합니다'})
+
+    try:
+        # 동영상 파일 확인
+        if 'video' not in request.files:
+            return jsonify({'success': False, 'error': '동영상 파일이 필요합니다'})
+
+        video_file = request.files['video']
+
+        if video_file.filename == '':
+            return jsonify({'success': False, 'error': '파일이 선택되지 않았습니다'})
+
+        # 허용된 확장자 확인
+        allowed_extensions = {'mp4', 'mov', 'avi', 'mkv', 'webm'}
+        if not ('.' in video_file.filename and video_file.filename.rsplit('.', 1)[1].lower() in allowed_extensions):
+            return jsonify({'success': False, 'error': '허용되지 않는 파일 형식입니다'})
+
+        # 동영상 저장 (필요한 경우)
+        filename = secure_filename(video_file.filename)
+        video_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        video_file.save(video_path)
+
+        # 여기에 동영상 분석 및 음악 생성 로직을 구현
+        # 이 예제에서는 더미 데이터를 사용합니다
+
+        # 새 음악 데이터 생성
+        user_id = session['user_id']
+        title = f"동영상 음악 {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        mood = "동영상 기반"  # 실제 분석에 기반하여 설정
+        location = "동영상"  # 실제 분석에 기반하여 설정
+        tempo = random.randint(60, 180)  # 실제 분석에 기반하여 설정
+
+        # 데이터베이스에 음악 정보 저장
+        music_id = str(uuid.uuid4())
+
+        # 여기에서 동영상 분석 기반으로 실제 음악 파일을 생성 (MIDI, MP3 등)
+        # 실제 구현에서는 여기에 음악 생성 코드를 추가합니다
+        music_file_path = f"music_{music_id}.mp3"
+
+        # 파일 시스템에 가짜 음악 파일을 생성 (실제 구현에서는 이 부분을 대체)
+        # 이 부분은 실제 음악 생성 API를 사용할 때 대체됩니다
+        with open(os.path.join(app.config['UPLOAD_FOLDER'], music_file_path), 'wb') as f:
+            f.write(b'dummy_audio_data')  # 실제 구현에서는 실제 오디오 데이터로 대체
+
+        # 음악 데이터를 저장하는 데이터베이스 코드를 여기에 추가하세요
+        music_data_file = 'music_data.json'
+
+        # 기존 데이터 로드
+        if os.path.exists(music_data_file):
+            with open(music_data_file, 'r', encoding='utf-8') as f:
+                music_list = json.load(f)
+        else:
+            music_list = []
+
+        # 새 음악 추가
+        new_music = {
+            'id': music_id,
+            'user_id': user_id,
+            'title': title,
+            'mood': mood,
+            'location': location,
+            'tempo': tempo,
+            'file_path': music_file_path,
+            'created_at': datetime.datetime.now().isoformat(),
+            'source_type': 'video'  # 동영상에서 생성되었음을 표시
+        }
+
+        music_list.append(new_music)
+
+        # 데이터 저장
+        with open(music_data_file, 'w', encoding='utf-8') as f:
+            json.dump(music_list, f, ensure_ascii=False, indent=4)
+
+        return jsonify({'success': True, 'music_id': music_id})
+
+    except Exception as e:
+        print(f"Error generating music from video: {e}")  # 디버깅을 위한 로그
+        return jsonify({'success': False, 'error': str(e)})
+
+
+
 @app.route('/upload', methods=['POST'])
 def upload_file():
     """음악 파일 업로드 처리"""

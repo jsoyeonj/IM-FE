@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const playBtn = document.getElementById('playBtn');
     const recordImg = document.querySelector('.record-img');
     const imageGenBtn = document.getElementById('imageGenBtn');
+    const videoGenBtn = document.getElementById('videoGenBtn');
 
     // 선택된 값 관리
     let selectedSpeed = speedSlider ? speedSlider.value : 50;
@@ -160,6 +161,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (imageGenBtn) {
         imageGenBtn.addEventListener('click', function() {
             window.location.href = '/image-create';
+        });
+    }
+
+    // 동영상으로 음악 생성 버튼 이벤트 (동영상 모드로 이미지 생성 페이지로 이동)
+    if (videoGenBtn) {
+        videoGenBtn.addEventListener('click', function() {
+            window.location.href = '/image-create?mode=video';
         });
     }
 

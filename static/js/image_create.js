@@ -1,17 +1,21 @@
 document.addEventListener('DOMContentLoaded', function() {
     // 요소 선택
-    const imageInput = document.getElementById('imageInput');
-    const imagePreview = document.getElementById('imagePreview');
+    const fileInput = document.getElementById('fileInput');
+    const filePreview = document.getElementById('filePreview');
     const imageUploadArea = document.querySelector('.image-upload-area');
     const uploadContent = document.querySelector('.upload-content');
     const uploadText = document.querySelector('.upload-text');
     const playBtn = document.getElementById('playBtn');
     const recordImg = document.querySelector('.record-img');
 
+    // URL 파라미터로 모드 확인
+    const urlParams = new URLSearchParams(window.location.search);
+    const mode = urlParams.get('mode') || 'image'; // 기본값은 이미지 모드
+
     // 상태 관리
     let isPlaying = false;
     let recordRotation = null;
-    let selectedImage = null;
+    let selectedFile = null;
 
     // 레코드 회전 애니메이션 함수
     function startRecordRotation() {
@@ -68,78 +72,112 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 이미지 업로드 영역 클릭 시 파일 선택 다이얼로그 열기
+    // 파일 업로드 영역 클릭 시 파일 선택 다이얼로그 열기
     if (imageUploadArea) {
         imageUploadArea.addEventListener('click', function(e) {
             // input 요소가 클릭된 경우는 중복 실행 방지
-            if (e.target !== imageInput) {
-                imageInput.click();
+            if (e.target !== fileInput) {
+                fileInput.click();
             }
         });
     }
 
-    // 이미지 업로드 시 처리
-    if (imageInput) {
-        imageInput.addEventListener('change', function(e) {
+    // 파일 업로드 시 처리
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
             if (e.target.files.length > 0) {
-                selectedImage = e.target.files[0];
+                selectedFile = e.target.files[0];
+                const fileType = selectedFile.type;
+
+                // 파일 타입 검증
+                if (mode === 'video' && !fileType.startsWith('video/')) {
+                    showMessage('동영상 파일만 업로드 가능합니다', 'error');
+                    return;
+                } else if (mode === 'image' && !fileType.startsWith('image/')) {
+                    showMessage('이미지 파일만 업로드 가능합니다', 'error');
+                    return;
+                }
 
                 // 미리보기 표시
                 const reader = new FileReader();
                 reader.onload = function(event) {
                     // 기존 미리보기 초기화
-                    imagePreview.innerHTML = '';
+                    filePreview.innerHTML = '';
 
                     // 업로드 영역 변경
                     imageUploadArea.classList.add('uploaded');
                     uploadContent.classList.add('uploaded');
 
-                    // 업로드된 이미지와 텍스트를 포함한 새 컨텐츠 생성
-                    uploadContent.innerHTML = `
-                        <div class="preview-content">
-                            <div class="preview-img-container">
-                                <img src="${event.target.result}" alt="업로드된 이미지" class="preview-img">
+                    // 파일 타입에 따른 미리보기 생성
+                    let previewHTML = '';
+                    if (mode === 'video') {
+                        previewHTML = `
+                            <div class="preview-content">
+                                <div class="preview-img-container">
+                                    <video controls class="preview-img" style="max-width: 150px; max-height: 4rem;">
+                                        <source src="${event.target.result}" type="${fileType}">
+                                        동영상을 재생할 수 없습니다.
+                                    </video>
+                                </div>
+                                <span class="upload-text uploaded">동영상으로 음악 생성하기</span>
                             </div>
-                            <span class="upload-text uploaded">사진으로 음악 생성하기</span>
-                        </div>
-                    `;
+                        `;
+                    } else {
+                        previewHTML = `
+                            <div class="preview-content">
+                                <div class="preview-img-container">
+                                    <img src="${event.target.result}" alt="업로드된 이미지" class="preview-img">
+                                </div>
+                                <span class="upload-text uploaded">사진으로 음악 생성하기</span>
+                            </div>
+                        `;
+                    }
+
+                    uploadContent.innerHTML = previewHTML;
                 };
 
-                reader.readAsDataURL(selectedImage);
+                reader.readAsDataURL(selectedFile);
 
-                // "사진이 성공적으로 업로드되었습니다!" 메시지 표시
-                showMessage('사진이 성공적으로 업로드되었습니다!', 'success');
+                // 성공 메시지 표시
+                const fileTypeText = mode === 'video' ? '동영상' : '사진';
+                showMessage(`${fileTypeText}이 성공적으로 업로드되었습니다!`, 'success');
             }
         });
     }
 
-    // 이미지 업로드 버튼이 변형된 후 클릭 시 (이미지가 이미 선택된 상태)
+    // 파일 업로드 버튼이 변형된 후 클릭 시 (파일이 이미 선택된 상태)
     if (imageUploadArea) {
         imageUploadArea.addEventListener('click', function(e) {
-            // 이미지가 선택되었고, 파일 input이 클릭되지 않은 경우
-            if (selectedImage && e.target !== imageInput) {
+            // 파일이 선택되었고, 파일 input이 클릭되지 않은 경우
+            if (selectedFile && e.target !== fileInput) {
                 // 클래스가 업로드된 상태일 때만 처리
                 if (imageUploadArea.classList.contains('uploaded')) {
                     // 음악 생성 로직
                     const uploadText = document.querySelector('.upload-text.uploaded');
                     if (uploadText) {
+                        const fileTypeText = mode === 'video' ? '동영상' : '사진';
                         uploadText.textContent = '생성 중...';
                     }
                     imageUploadArea.style.pointerEvents = 'none';
 
                     // FormData 생성
                     const formData = new FormData();
-                    formData.append('image', selectedImage);
+                    const fieldName = mode === 'video' ? 'video' : 'image';
+                    formData.append(fieldName, selectedFile);
+
+                    // 서버 엔드포인트 결정
+                    const endpoint = mode === 'video' ? '/generate-music-from-video' : '/generate-music-from-image';
 
                     // 서버에 데이터 전송
-                    fetch('/generate-music-from-image', {
+                    fetch(endpoint, {
                         method: 'POST',
                         body: formData
                     })
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            showMessage('이미지로부터 음악이 생성되었습니다!', 'success');
+                            const fileTypeText = mode === 'video' ? '동영상' : '이미지';
+                            showMessage(`${fileTypeText}로부터 음악이 생성되었습니다!`, 'success');
                             // 일정 시간 후 플레이리스트 페이지로 리다이렉트
                             setTimeout(() => {
                                 window.location.href = `/playlist?music_id=${data.music_id}`;
@@ -148,7 +186,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             showMessage(data.error || '음악 생성 중 오류가 발생했습니다', 'error');
                             // 버튼 상태 복원
                             if (uploadText) {
-                                uploadText.textContent = '사진으로 음악 생성하기';
+                                const fileTypeText = mode === 'video' ? '동영상으로 음악 생성하기' : '사진으로 음악 생성하기';
+                                uploadText.textContent = fileTypeText;
                             }
                             imageUploadArea.style.pointerEvents = 'auto';
                         }
@@ -158,7 +197,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         showMessage('서버 연결 오류가 발생했습니다', 'error');
                         // 버튼 상태 복원
                         if (uploadText) {
-                            uploadText.textContent = '사진으로 음악 생성하기';
+                            const fileTypeText = mode === 'video' ? '동영상으로 음악 생성하기' : '사진으로 음악 생성하기';
+                            uploadText.textContent = fileTypeText;
                         }
                         imageUploadArea.style.pointerEvents = 'auto';
                     });

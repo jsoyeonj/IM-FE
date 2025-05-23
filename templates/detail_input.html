@@ -19,7 +19,10 @@
             <div class="title-section">
                 <h1 class="title">음악<br>생성하기</h1>
                 <p class="subtitle">Music Generation</p>
-                <button class="image-gen-btn" id="imageGenBtn" onclick="window.location.href='{{ url_for('image_create') }}'">이미지로 음악 생성하기</button>
+                <div class="generation-buttons">
+                    <button class="image-gen-btn" id="imageGenBtn" onclick="window.location.href='{{ url_for('image_create') }}'">사진으로 음악 생성하기</button>
+                    <button class="video-gen-btn" id="videoGenBtn" onclick="window.location.href='{{ url_for('image_create') }}?mode=video'">동영상으로 음악 생성하기</button>
+                </div>
             </div>
 
             <!-- 레코드 영역 (원모양 재생 버튼) -->

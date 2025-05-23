@@ -139,13 +139,20 @@ input[type='range']::-webkit-slider-runnable-track {
   margin-top: 0.5rem;
 }
 
-.image-gen-btn {
+/* 생성 버튼들을 담는 컨테이너 */
+.generation-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.image-gen-btn, .video-gen-btn {
   width: 12rem;
   height: 2.5rem;
   border: none;
   border-radius: 1.25rem;
   background: #fff;
-  margin-top: 1.5rem;
   box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
   cursor: pointer;
   color: #513d6c;
@@ -153,7 +160,7 @@ input[type='range']::-webkit-slider-runnable-track {
   transition: all 0.3s ease;
 }
 
-.image-gen-btn:hover {
+.image-gen-btn:hover, .video-gen-btn:hover {
   transform: scale(1.05);
   background: #f8f8f8;
 }
