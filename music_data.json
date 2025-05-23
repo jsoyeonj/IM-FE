@@ -289,5 +289,15 @@
     "file_path": "983067f7-d654-437c-b8d4-656dcd81876f.mp3",
     "user_id": "100288572071205133592",
     "detail_text": "ㅇㅇ"
+  },
+  {
+    "id": "fc6ad252-5029-4b77-b38a-9ee2c01554a9",
+    "title": "신나는 분위기의 산책 음악",
+    "tempo": "74",
+    "mood": "신나는",
+    "location": "산책",
+    "created_at": "2025-05-23T23:36:57.402450",
+    "file_path": "fc6ad252-5029-4b77-b38a-9ee2c01554a9.mp3",
+    "user_id": "anonymous"
   }
 ]
