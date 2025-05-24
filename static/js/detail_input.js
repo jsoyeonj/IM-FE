@@ -106,11 +106,11 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showMessage('상세 내용이 반영된 음악이 생성되었습니다!', 'success');
-                    // 일정 시간 후 플레이리스트 페이지로 리다이렉트
+                    showMessage('음악이 생성되었습니다!', 'success');
+                    // 생성 완료 페이지로 리다이렉트
                     setTimeout(() => {
-                        window.location.href = `/playlist?music_id=${data.music_id}`;
-                    }, 1500);
+                        window.location.href = data.redirect_url;
+                    }, 1000);
                 } else {
                     showMessage(data.error || '음악 생성 중 오류가 발생했습니다', 'error');
                     // 버튼 상태 복원

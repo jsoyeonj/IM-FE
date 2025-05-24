@@ -75,9 +75,64 @@ document.addEventListener('DOMContentLoaded', function() {
     // 파일 업로드 영역 클릭 시 파일 선택 다이얼로그 열기
     if (imageUploadArea) {
         imageUploadArea.addEventListener('click', function(e) {
-            // input 요소가 클릭된 경우는 중복 실행 방지
-            if (e.target !== fileInput) {
+            // 파일이 업로드된 상태가 아닐 때만 파일 선택 창 열기
+            if (!selectedFile && e.target !== fileInput) {
                 fileInput.click();
+            }
+            // 파일이 업로드된 상태일 때는 음악 생성 로직 실행
+            else if (selectedFile && imageUploadArea.classList.contains('uploaded')) {
+                e.preventDefault(); // 파일 선택 창 열리는 것 방지
+
+                // 음악 생성 로직
+                const uploadText = document.querySelector('.upload-text.uploaded');
+                if (uploadText) {
+                    const fileTypeText = mode === 'video' ? '동영상' : '사진';
+                    uploadText.textContent = '생성 중...';
+                }
+                imageUploadArea.style.pointerEvents = 'none';
+
+                // FormData 생성
+                const formData = new FormData();
+                const fieldName = mode === 'video' ? 'video' : 'image';
+                formData.append(fieldName, selectedFile);
+
+                // 서버 엔드포인트 결정
+                const endpoint = mode === 'video' ? '/generate-music-from-video' : '/generate-music-from-image';
+
+                // 서버에 데이터 전송
+                fetch(endpoint, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const fileTypeText = mode === 'video' ? '동영상' : '이미지';
+                        showMessage(`${fileTypeText}로부터 음악이 생성되었습니다!`, 'success');
+                        // 생성 완료 페이지로 리다이렉트
+                        setTimeout(() => {
+                            window.location.href = data.redirect_url;
+                        }, 1000);
+                    } else {
+                        showMessage(data.error || '음악 생성 중 오류가 발생했습니다', 'error');
+                        // 버튼 상태 복원
+                        if (uploadText) {
+                            const fileTypeText = mode === 'video' ? '동영상으로 음악 생성하기' : '사진으로 음악 생성하기';
+                            uploadText.textContent = fileTypeText;
+                        }
+                        imageUploadArea.style.pointerEvents = 'auto';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showMessage('서버 연결 오류가 발생했습니다', 'error');
+                    // 버튼 상태 복원
+                    if (uploadText) {
+                        const fileTypeText = mode === 'video' ? '동영상으로 음악 생성하기' : '사진으로 음악 생성하기';
+                        uploadText.textContent = fileTypeText;
+                    }
+                    imageUploadArea.style.pointerEvents = 'auto';
+                });
             }
         });
     }
@@ -141,68 +196,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 성공 메시지 표시
                 const fileTypeText = mode === 'video' ? '동영상' : '사진';
                 showMessage(`${fileTypeText}이 성공적으로 업로드되었습니다!`, 'success');
-            }
-        });
-    }
-
-    // 파일 업로드 버튼이 변형된 후 클릭 시 (파일이 이미 선택된 상태)
-    if (imageUploadArea) {
-        imageUploadArea.addEventListener('click', function(e) {
-            // 파일이 선택되었고, 파일 input이 클릭되지 않은 경우
-            if (selectedFile && e.target !== fileInput) {
-                // 클래스가 업로드된 상태일 때만 처리
-                if (imageUploadArea.classList.contains('uploaded')) {
-                    // 음악 생성 로직
-                    const uploadText = document.querySelector('.upload-text.uploaded');
-                    if (uploadText) {
-                        const fileTypeText = mode === 'video' ? '동영상' : '사진';
-                        uploadText.textContent = '생성 중...';
-                    }
-                    imageUploadArea.style.pointerEvents = 'none';
-
-                    // FormData 생성
-                    const formData = new FormData();
-                    const fieldName = mode === 'video' ? 'video' : 'image';
-                    formData.append(fieldName, selectedFile);
-
-                    // 서버 엔드포인트 결정
-                    const endpoint = mode === 'video' ? '/generate-music-from-video' : '/generate-music-from-image';
-
-                    // 서버에 데이터 전송
-                    fetch(endpoint, {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            const fileTypeText = mode === 'video' ? '동영상' : '이미지';
-                            showMessage(`${fileTypeText}로부터 음악이 생성되었습니다!`, 'success');
-                            // 일정 시간 후 플레이리스트 페이지로 리다이렉트
-                            setTimeout(() => {
-                                window.location.href = `/playlist?music_id=${data.music_id}`;
-                            }, 1500);
-                        } else {
-                            showMessage(data.error || '음악 생성 중 오류가 발생했습니다', 'error');
-                            // 버튼 상태 복원
-                            if (uploadText) {
-                                const fileTypeText = mode === 'video' ? '동영상으로 음악 생성하기' : '사진으로 음악 생성하기';
-                                uploadText.textContent = fileTypeText;
-                            }
-                            imageUploadArea.style.pointerEvents = 'auto';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        showMessage('서버 연결 오류가 발생했습니다', 'error');
-                        // 버튼 상태 복원
-                        if (uploadText) {
-                            const fileTypeText = mode === 'video' ? '동영상으로 음악 생성하기' : '사진으로 음악 생성하기';
-                            uploadText.textContent = fileTypeText;
-                        }
-                        imageUploadArea.style.pointerEvents = 'auto';
-                    });
-                }
             }
         });
     }

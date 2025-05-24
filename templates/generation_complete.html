@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block title %}Croffle - 음악 생성 완료{% endblock %}
+
+{% block additional_css %}
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Pretendard variable', sans-serif;
+        height: 100vh;
+        background: linear-gradient(119deg, #fff 0%, #dfd0ff 46%, #faf7ff 100%, #cc46b7 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+    }
+
+    /* 메인 컨테이너 */
+    .main-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 2rem;
+    }
+
+    /* 단계 텍스트 제거 */
+
+    /* 레코드 컨테이너 */
+    .record-container {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    /* 레코드 이미지 (Get started와 동일하게) */
+    .record-img {
+        width: 20rem;
+        height: auto;
+        transition: transform 2s ease-in-out;
+        animation: spin 4s linear infinite;
+    }
+
+    /* 톤암 추가 */
+    .tonearm {
+        position: absolute;
+        top: 20%;
+        right: -10%;
+        width: 120px;
+        height: 4px;
+        background: linear-gradient(90deg, #4a5568, #2d3748);
+        border-radius: 2px;
+        transform-origin: right center;
+        animation: tonearmMove 4s ease-in-out infinite;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+
+    .tonearm::before {
+        content: '';
+        position: absolute;
+        right: -10px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 20px;
+        height: 20px;
+        background: #2d3748;
+        border-radius: 50%;
+    }
+
+    .tonearm::after {
+        content: '';
+        position: absolute;
+        left: -5px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 10px;
+        height: 10px;
+        background: #e53e3e;
+        border-radius: 50%;
+    }
+
+    /* 재생 버튼 (Get started와 동일하게) */
+    .play-btn {
+        position: absolute;
+        bottom: 0.5rem;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 5rem;
+        height: 5rem;
+        background-color: #3d1655;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: transform 0.3s ease;
+    }
+
+    .play-btn:hover {
+        transform: translateX(-50%) scale(1.1);
+    }
+
+    .play-icon {
+        width: 2rem;
+        height: 2rem;
+        margin-top: 0.5rem;
+    }
+
+    /* 애니메이션 */
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    @keyframes tonearmMove {
+        0%, 100% { transform: rotate(-10deg); }
+        50% { transform: rotate(-5deg); }
+    }
+
+    /* 완료 텍스트 */
+    .completion-text {
+        color: #513d6c;
+        font-size: 2rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    /* 부제목 - 메인 텍스트와 동일한 스타일 */
+    .subtitle {
+        color: #513d6c;
+        font-size: 2rem;
+        font-weight: 500;
+        margin-bottom: 2rem;
+    }
+
+    /* 버튼 컨테이너 */
+    .button-container {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        align-items: center;
+    }
+
+    /* 액션 버튼 - 크기와 글씨 키움 */
+    .action-button {
+        width: 16rem;
+        height: 3.5rem;
+        border: none;
+        border-radius: 1.75rem;
+        background: #fff;
+        box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+        cursor: pointer;
+        color: #513d6c;
+        font-size: 1.1rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .action-button:hover {
+        transform: scale(1.05);
+        background: #f8f8f8;
+    }
+
+    /* 반응형 */
+    @media (max-width: 768px) {
+        .record-img {
+            width: 15rem;
+        }
+
+        .tonearm {
+            width: 100px;
+            right: -8%;
+        }
+
+        .play-btn {
+            width: 4rem;
+            height: 4rem;
+        }
+
+        .play-icon {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+
+        .completion-text, .subtitle {
+            font-size: 1.5rem;
+        }
+
+        .button-container {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .action-button {
+            width: 14rem;
+            height: 3rem;
+            font-size: 1rem;
+        }
+    }
+
+    /* 성공 메시지 애니메이션 */
+    .fade-in {
+        animation: fadeIn 0.8s ease-in;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-container fade-in">
+    <div class="record-container">
+        <img src="{{ url_for('static', filename='images/record.svg') }}" alt="레코드" class="record-img">
+        <div class="tonearm"></div>
+        <button class="play-btn" id="playBtn">
+            <img src="{{ url_for('static', filename='images/playIcon.svg') }}" alt="재생" class="play-icon">
+        </button>
+    </div>
+
+    <div class="completion-text">음악이 완성되었어요!</div>
+    <div class="subtitle">한 번 들어볼까요?</div>
+
+    <div class="button-container">
+        <button class="action-button" onclick="goToCreate()">
+            또 만들고 싶어요
+        </button>
+        <button class="action-button" onclick="goToPlaylist()">
+            다른 사람 음악도 들어볼래요
+        </button>
+    </div>
+</div>
+
+<script>
+    function goToCreate() {
+        // "Get started" 페이지로 이동
+        window.location.href = "{{ url_for('create') }}";
+    }
+
+    function goToPlaylist() {
+        {% if music_id %}
+            window.location.href = "{{ url_for('playlist') }}?music_id={{ music_id }}";
+        {% else %}
+            window.location.href = "{{ url_for('playlist') }}";
+        {% endif %}
+    }
+
+    // 레코드 재생/일시정지 기능
+    document.addEventListener('DOMContentLoaded', function() {
+        const playBtn = document.getElementById('playBtn');
+        const recordImg = document.querySelector('.record-img');
+        let isPlaying = false;
+
+        if (playBtn) {
+            playBtn.addEventListener('click', function() {
+                if (isPlaying) {
+                    // 일시정지 상태로 변경
+                    isPlaying = false;
+                    this.querySelector('.play-icon').src = "{{ url_for('static', filename='images/playIcon.svg') }}";
+                    recordImg.style.animationPlayState = 'paused';
+                } else {
+                    // 재생 상태로 변경
+                    isPlaying = true;
+                    this.querySelector('.play-icon').src = "{{ url_for('static', filename='images/pauseIcon.svg') }}";
+                    recordImg.style.animationPlayState = 'running';
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

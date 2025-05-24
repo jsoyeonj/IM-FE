@@ -227,7 +227,11 @@ def generate_music_with_detail():
 
         save_music_data(music_list)
 
-        return jsonify({'success': True, 'music_id': music_id})
+        return jsonify({
+    'success': True,
+    'music_id': music_id,
+    'redirect_url': url_for('generation_complete', music_id=music_id)
+})
 
     return jsonify({'success': False, 'error': 'Invalid request method'})
 
@@ -314,7 +318,11 @@ def generate_music_from_image():
         with open(music_data_file, 'w', encoding='utf-8') as f:
             json.dump(music_list, f, ensure_ascii=False, indent=4)
 
-        return jsonify({'success': True, 'music_id': music_id})
+        return jsonify({
+            'success': True,
+            'music_id': music_id,
+            'redirect_url': url_for('generation_complete', music_id=music_id)
+        })
 
     except Exception as e:
         print(f"Error generating music from image: {e}")  # 디버깅을 위한 로그
@@ -398,7 +406,11 @@ def generate_music_from_video():
         with open(music_data_file, 'w', encoding='utf-8') as f:
             json.dump(music_list, f, ensure_ascii=False, indent=4)
 
-        return jsonify({'success': True, 'music_id': music_id})
+        return jsonify({
+            'success': True,
+            'music_id': music_id,
+            'redirect_url': url_for('generation_complete', music_id=music_id)
+        })
 
     except Exception as e:
         print(f"Error generating music from video: {e}")  # 디버깅을 위한 로그
@@ -450,6 +462,24 @@ def playlist():
     music_list.sort(key=lambda x: x['created_at'], reverse=True)
 
     return render_template('playlist.html', music_list=music_list, music=selected_music)
+
+
+@app.route('/generation-complete')
+def generation_complete():
+    """음악 생성 완료 페이지"""
+    # URL 파라미터에서 music_id를 확인
+    music_id = request.args.get('music_id')
+
+    # 로그인 상태 확인
+    logged_in = 'user_id' in session
+    user_name = session.get('user_name', '')
+    user_picture = session.get('user_picture', '')
+
+    return render_template('generation_complete.html',
+                           music_id=music_id,
+                           logged_in=logged_in,
+                           user_name=user_name,
+                           user_picture=user_picture)
 
 
 # 이미지 기반 음악 생성 페이지로 라우팅
