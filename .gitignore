@@ -1,0 +1,51 @@
+# 디폴트 무시된 파일
+/shelf/
+/workspace.xml
+
+# 음악 데이터 파일 (로컬에서만 관리)
+music_data.json
+
+# Python 관련
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 가상 환경
+.venv/
+venv/
+ENV/
+env/
+
+# IDE 설정
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 환경 변수 파일
+.env.local
+.env.production
+
+# 업로드된 파일들
+uploads/
+static/music/
+
+# 로그 파일
+*.log
