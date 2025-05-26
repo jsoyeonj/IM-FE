@@ -50,28 +50,37 @@ if not os.path.exists('static/images'):
 # Google OAuth 도우미 가져오기
 from oauth_helper import get_google_login_url, handle_google_callback
 
+
 def get_auth_headers():
     """인증 헤더 반환 - 개선된 버전"""
     headers = {'Content-Type': 'application/json'}
-    
-    # JWT 토큰 확인
-    access_token = session.get('access_token')
+
+    # JWT 토큰 확인 (두 키 모두 확인)
+    access_token = session.get('access_token') or session.get('jwt_token')
+
     if access_token:
         headers['Authorization'] = f'Bearer {access_token}'
         print(f"🔑 JWT 토큰 사용: Bearer {access_token[:20]}...")
     else:
         print("⚠️ JWT 토큰이 없습니다. 익명 사용자로 처리됩니다.")
-    
+        print(f"세션 내용: user_id={session.get('user_id')}, logged_in={session.get('logged_in')}")
+        print(f"세션 키들: {list(session.keys())}")
+
     return headers
+
 
 def is_user_logged_in():
     """사용자 로그인 상태 확인"""
     logged_in = session.get('logged_in', False)
-    access_token = session.get('access_token')
-    
+    access_token = session.get('access_token') or session.get('jwt_token')
+
     print(f"로그인 상태: {logged_in}, 토큰 존재: {access_token is not None}")
-    
+
+    if logged_in and not access_token:
+        print("⚠️ 로그인은 되어있지만 JWT 토큰이 없습니다. 세션 문제일 수 있습니다.")
+
     return logged_in and access_token is not None
+
 
 def check_backend_connection():
     """백엔드 서버 연결 확인"""
@@ -79,7 +88,7 @@ def check_backend_connection():
         print(f"백엔드 연결 시도: {BACKEND_API_URL}/health")
         response = requests.get(f'{BACKEND_API_URL}/health', timeout=5)
         print(f"백엔드 응답: {response.status_code}")
-        
+
         if response.status_code == 200:
             result = response.json()
             print(f"백엔드 상태: 연결 성공")
@@ -94,6 +103,7 @@ def check_backend_connection():
         print(f"백엔드 연결 오류: {e}")
         return False
 
+
 def load_music_data():
     """음악 데이터 로드 (로컬 JSON 파일)"""
     if os.path.exists(MUSIC_DATA_FILE):
@@ -101,34 +111,61 @@ def load_music_data():
             return json.load(f)
     return []
 
+
 def save_music_data(data):
     """음악 데이터 저장 (로컬 JSON 파일)"""
     with open(MUSIC_DATA_FILE, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
 
 # 날짜 형식 포맷터
 @app.template_filter('format_date')
 def format_date(value, format='%Y년 %m월 %d일 %H:%M'):
     if isinstance(value, str):
-        value = datetime.datetime.fromisoformat(value.replace('Z', '+00:00'))
+        try:
+            # ISO format 시도
+            value = datetime.datetime.fromisoformat(value.replace('Z', '+00:00'))
+        except ValueError:
+            try:
+                # GMT format 시도 ('Mon, 26 May 2025 03:36:17 GMT')
+                value = datetime.datetime.strptime(value, '%a, %d %b %Y %H:%M:%S %Z')
+            except ValueError:
+                try:
+                    # 다른 일반적인 형식들 시도
+                    for fmt in ['%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d']:
+                        try:
+                            value = datetime.datetime.strptime(value, fmt)
+                            break
+                        except ValueError:
+                            continue
+                    else:
+                        # 모든 형식이 실패하면 현재 시간 사용
+                        print(f"날짜 형식 변환 실패: {value}")
+                        value = datetime.datetime.now()
+                except:
+                    value = datetime.datetime.now()
     return value.strftime(format)
+
 
 @app.route('/')
 def index():
     """메인 페이지 렌더링"""
     return render_template('index.html')
 
+
 @app.route('/create', methods=['GET', 'POST'])
 def create():
     """음악 생성 페이지"""
     if request.method == 'POST':
         return redirect(url_for('generate_music'))
-    
+
     # GET 요청인 경우 페이지 렌더링
     return render_template('create.html')
+
 
 @app.route('/generate-music', methods=['POST'])
 def generate_music():
@@ -137,11 +174,11 @@ def generate_music():
         data = request.get_json()
         print(f"음악 생성 요청 데이터: {data}")
         print(f"환경변수 BACKEND_API_URL: {BACKEND_API_URL}")
-        
+
         # 로그인 상태 확인
         user_logged_in = is_user_logged_in()
         print(f"👤 사용자 로그인 상태: {user_logged_in}")
-        
+
         # 필수 파라미터 확인
         if not data or 'mood' not in data or 'location' not in data:
             return jsonify({
@@ -152,19 +189,19 @@ def generate_music():
         # 백엔드 연결 확인
         backend_connected = check_backend_connection()
         print(f"백엔드 연결 상태: {backend_connected}")
-        
+
         if backend_connected:
             # 백엔드 API 호출 시도
             try:
                 prompt1 = f"{data['mood']} 분위기의 {data['location']} 음악, 템포 {data.get('speed', 50)}"
-                
+
                 api_data = {
                     'prompt1': prompt1
                 }
-                
+
                 print(f"백엔드로 전송할 데이터: {api_data}")
                 print(f"요청 URL: {BACKEND_API_URL}/generate-music")
-                
+
                 # 인증 헤더 포함
                 headers = get_auth_headers()
                 print(f"요청 헤더: {headers}")
@@ -175,27 +212,27 @@ def generate_music():
                     headers=headers,
                     timeout=30
                 )
-                
+
                 print(f"백엔드 응답 상태: {response.status_code}")
                 print(f"백엔드 응답 내용: {response.text}")
 
                 if response.status_code == 200:
                     result = response.json()
                     print(f"백엔드 응답 파싱: {result}")
-                    
+
                     if result.get('success'):
                         music_data = result.get('data', {})
                         music_url = music_data.get('musicUrl')
                         title = music_data.get('title')
                         music_id = str(uuid.uuid4())
-                        
+
                         if user_logged_in:
                             print(f"✓ 로그인된 사용자: 백엔드에서 music_tb + mymusic_tb에 저장됨")
                         else:
                             print(f"✓ 익명 사용자: 백엔드에서 music_tb에만 저장됨")
-                        
+
                         print(f"✓ 백엔드에서 음악 생성 성공: {title}")
-                        
+
                         return jsonify({
                             'success': True,
                             'music_id': music_id,
@@ -216,7 +253,7 @@ def generate_music():
 
         # 백엔드 연결 실패 시 로컬 처리
         print("⚠️ 백엔드 서버에 연결할 수 없거나 음악 생성에 실패했습니다. 로컬 모드로 실행합니다.")
-        
+
         music_id = str(uuid.uuid4())
         created_at = datetime.datetime.now().isoformat()
 
@@ -236,7 +273,7 @@ def generate_music():
         all_music = load_music_data()
         all_music.append(music_data)
         save_music_data(all_music)
-        
+
         print(f"✓ 로컬에 음악 데이터 저장: {music_data['title']}")
 
         return jsonify({
@@ -252,12 +289,13 @@ def generate_music():
             'error': f'서버 오류: {str(e)}'
         }), 500
 
+
 @app.route('/generate-music-with-detail', methods=['POST'])
 def generate_music_with_detail():
     """상세 내용을 반영한 음악 생성"""
     try:
         data = request.get_json()
-        
+
         if 'detail_text' not in data:
             return jsonify({
                 'success': False,
@@ -287,14 +325,15 @@ def generate_music_with_detail():
                     if result.get('success'):
                         music_data = result.get('data', {})
                         new_music_id = str(uuid.uuid4())
-                        
+
                         print(f"✓ 백엔드에서 상세 음악 생성 성공: {music_data.get('title')}")
-                        
+
                         return jsonify({
                             'success': True,
                             'music_id': new_music_id,
                             'music_url': music_data.get('musicUrl'),
-                            'title': music_data.get('title')
+                            'title': music_data.get('title'),
+                            'redirect_url': url_for('generation_complete', music_id=new_music_id)
                         })
                 else:
                     print(f"백엔드 상세 음악 생성 오류: {response.status_code} - {response.text}")
@@ -328,13 +367,18 @@ def generate_music_with_detail():
 
         save_music_data(music_list)
 
-        return jsonify({'success': True, 'music_id': music_id})
+        return jsonify({
+            'success': True,
+            'music_id': music_id,
+            'redirect_url': url_for('generation_complete', music_id=music_id)
+        })
 
     except Exception as e:
         return jsonify({
             'success': False,
             'error': f'서버 오류: {str(e)}'
         }), 500
+
 
 @app.route('/generate-music-from-image', methods=['POST'])
 def generate_music_from_image():
@@ -355,7 +399,7 @@ def generate_music_from_image():
             }), 400
 
         allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
-        if not ('.' in image_file.filename and 
+        if not ('.' in image_file.filename and
                 image_file.filename.rsplit('.', 1)[1].lower() in allowed_extensions):
             return jsonify({
                 'success': False,
@@ -382,12 +426,13 @@ def generate_music_from_image():
                     if result.get('success'):
                         music_data = result.get('data', {})
                         music_id = str(uuid.uuid4())
-                        
+
                         return jsonify({
                             'success': True,
                             'music_id': music_id,
                             'music_url': music_data.get('musicUrl'),
-                            'title': music_data.get('title')
+                            'title': music_data.get('title'),
+                            'redirect_url': url_for('generation_complete', music_id=music_id)
                         })
             except requests.RequestException:
                 pass
@@ -416,13 +461,18 @@ def generate_music_from_image():
         music_list.append(new_music)
         save_music_data(music_list)
 
-        return jsonify({'success': True, 'music_id': music_id})
+        return jsonify({
+            'success': True,
+            'music_id': music_id,
+            'redirect_url': url_for('generation_complete', music_id=music_id)
+        })
 
     except Exception as e:
         return jsonify({
             'success': False,
             'error': f'서버 오류: {str(e)}'
         }), 500
+
 
 @app.route('/generate-music-from-video', methods=['POST'])
 def generate_music_from_video():
@@ -444,7 +494,7 @@ def generate_music_from_video():
             }), 400
 
         allowed_extensions = {'mp4', 'mov', 'avi', 'mkv', 'webm'}
-        if not ('.' in video_file.filename and 
+        if not ('.' in video_file.filename and
                 video_file.filename.rsplit('.', 1)[1].lower() in allowed_extensions):
             return jsonify({
                 'success': False,
@@ -476,13 +526,18 @@ def generate_music_from_video():
         music_list.append(new_music)
         save_music_data(music_list)
 
-        return jsonify({'success': True, 'music_id': music_id})
+        return jsonify({
+            'success': True,
+            'music_id': music_id,
+            'redirect_url': url_for('generation_complete', music_id=music_id)
+        })
 
     except Exception as e:
         return jsonify({
             'success': False,
             'error': f'서버 오류: {str(e)}'
         }), 500
+
 
 @app.route('/playlist')
 def playlist():
@@ -492,7 +547,7 @@ def playlist():
         if check_backend_connection():
             try:
                 headers = get_auth_headers()
-                
+
                 if 'access_token' in session:
                     response = requests.get(
                         f'{BACKEND_API_URL}/myplaylist',
@@ -511,7 +566,7 @@ def playlist():
                     if result.get('success'):
                         data = result.get('data', {})
                         music_list = data.get('musicList', [])
-                        
+
                         # 백엔드 데이터 형식에 맞게 변환
                         converted_music_list = []
                         for music in music_list:
@@ -523,9 +578,9 @@ def playlist():
                                 'user_id': session.get('user_id', 'anonymous')
                             }
                             converted_music_list.append(converted_music)
-                        
+
                         music_list = converted_music_list
-                        
+
                         music_id = request.args.get('music_id')
                         selected_music = None
                         if music_id:
@@ -544,7 +599,7 @@ def playlist():
         # 로컬 데이터 사용
         print("백엔드 연결 실패. 로컬 플레이리스트를 사용합니다.")
         music_list = load_music_data()
-        
+
         # 로그인한 사용자의 음악만 필터링
         if 'user_id' in session:
             music_list = [music for music in music_list if music['user_id'] == session['user_id']]
@@ -568,6 +623,26 @@ def playlist():
         print(f"플레이리스트 로드 오류: {e}")
         return render_template('playlist.html', music_list=[], music=None)
 
+
+@app.route('/playlist-main')
+def playlist_main():
+    """메인 플레이리스트 페이지 (실시간 생성 + 인기 음악)"""
+    logged_in = 'user_id' in session
+    user_name = session.get('user_name', '')
+    user_picture = session.get('user_picture', '')
+
+    return render_template('playlist_main.html',
+                           logged_in=logged_in,
+                           user_name=user_name,
+                           user_picture=user_picture)
+
+@app.route('/generation-complete')
+def generation_complete():
+    """음악 생성 완료 페이지"""
+    music_id = request.args.get('music_id', '')
+    return render_template('generation_complete.html', music_id=music_id)
+
+
 # 나머지 라우트들은 기존과 동일...
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -587,6 +662,7 @@ def upload_file():
 
     return jsonify({'error': '허용되지 않는 파일 형식입니다'}), 400
 
+
 @app.route('/image-create')
 def image_create():
     logged_in = 'user_id' in session
@@ -597,6 +673,7 @@ def image_create():
                            logged_in=logged_in,
                            user_name=user_name,
                            user_picture=user_picture)
+
 
 @app.route('/detail-input')
 def detail_input():
@@ -611,6 +688,7 @@ def detail_input():
                            user_name=user_name,
                            user_picture=user_picture)
 
+
 @app.route('/play/<music_id>')
 def play_music(music_id):
     """음악 재생 데이터 반환"""
@@ -618,6 +696,7 @@ def play_music(music_id):
         'success': True,
         'url': url_for('static', filename='music/demo.mp3')
     })
+
 
 @app.route('/download/<music_id>')
 def download_music(music_id):
@@ -629,27 +708,101 @@ def download_music(music_id):
         download_name=f"music_{music_id}.mp3"
     )
 
+
 @app.route('/delete/<music_id>', methods=['DELETE'])
 def delete_music(music_id):
-    """음악 삭제"""
-    music_list = load_music_data()
+    """음악 삭제 - 백엔드 API 호출"""
+    try:
+        # 로그인 상태 확인
+        if not is_user_logged_in():
+            return jsonify({
+                'success': False,
+                'error': '로그인이 필요합니다.'
+            }), 401
 
-    for i, music in enumerate(music_list):
-        if music['id'] == music_id:
-            if 'user_id' in session and music['user_id'] != session['user_id']:
+        # 백엔드 API 호출 시도
+        if check_backend_connection():
+            try:
+                headers = get_auth_headers()
+                
+                response = requests.delete(
+                    f'{BACKEND_API_URL}/music/{music_id}',
+                    headers=headers,
+                    timeout=10
+                )
+                
+                print(f"백엔드 삭제 응답: {response.status_code} - {response.text}")
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    if result.get('success'):
+                        print(f"✓ 백엔드에서 음악 삭제 성공: 음악 ID {music_id}")
+                        return jsonify({
+                            'success': True,
+                            'message': '음악이 삭제되었습니다.'
+                        })
+                    else:
+                        return jsonify({
+                            'success': False,
+                            'error': result.get('message', '음악 삭제에 실패했습니다.')
+                        }), 400
+                elif response.status_code == 401:
+                    return jsonify({
+                        'success': False,
+                        'error': '인증이 필요합니다.'
+                    }), 401
+                elif response.status_code == 403:
+                    return jsonify({
+                        'success': False,
+                        'error': '이 음악을 삭제할 권한이 없습니다.'
+                    }), 403
+                elif response.status_code == 404:
+                    return jsonify({
+                        'success': False,
+                        'error': '삭제할 음악을 찾을 수 없습니다.'
+                    }), 404
+                else:
+                    return jsonify({
+                        'success': False,
+                        'error': f'서버 오류: {response.status_code}'
+                    }), response.status_code
+                    
+            except requests.RequestException as e:
+                print(f"백엔드 삭제 요청 오류: {e}")
+                # 백엔드 실패 시 로컬 처리로 fallback
+
+        # 로컬 처리 (백엔드 연결 실패 시)
+        print("백엔드 연결 실패. 로컬 삭제 처리를 시도합니다.")
+        music_list = load_music_data()
+        
+        for i, music in enumerate(music_list):
+            if music['id'] == music_id:
+                if 'user_id' in session and music['user_id'] != session['user_id']:
+                    return jsonify({
+                        'success': False,
+                        'error': '이 음악을 삭제할 권한이 없습니다.'
+                    }), 403
+
+                del music_list[i]
+                save_music_data(music_list)
+                print(f"✓ 로컬에서 음악 삭제 성공: 음악 ID {music_id}")
                 return jsonify({
-                    'success': False,
-                    'error': '이 음악을 삭제할 권한이 없습니다.'
-                }), 403
+                    'success': True,
+                    'message': '음악이 삭제되었습니다.'
+                })
 
-            del music_list[i]
-            save_music_data(music_list)
-            return jsonify({'success': True})
+        return jsonify({
+            'success': False,
+            'error': '음악을 찾을 수 없습니다.'
+        }), 404
 
-    return jsonify({
-        'success': False,
-        'error': '음악을 찾을 수 없습니다.'
-    }), 404
+    except Exception as e:
+        print(f"음악 삭제 오류: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'서버 오류: {str(e)}'
+        }), 500
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -666,6 +819,7 @@ def login():
 
     return render_template('login.html')
 
+
 @app.route('/auth/google/callback')
 def login_callback():
     """Google OAuth 콜백 처리"""
@@ -676,11 +830,13 @@ def login_callback():
     else:
         return render_template('login.html', error=error_message)
 
+
 @app.route('/logout')
 def logout():
     """로그아웃 처리"""
     session.clear()
     return redirect(url_for('index'))
+
 
 @app.context_processor
 def inject_user():
@@ -690,6 +846,56 @@ def inject_user():
         'user_picture': session.get('user_picture', ''),
         'user_email': session.get('user_email', '')
     }
+
+
+@app.route('/debug/session')
+def debug_session():
+    """세션 상태 디버깅"""
+    session_info = {
+        'logged_in': session.get('logged_in'),
+        'user_id': session.get('user_id'),
+        'user_name': session.get('user_name'),
+        'access_token_exists': bool(session.get('access_token')),
+        'jwt_token_exists': bool(session.get('jwt_token')),
+        'access_token_preview': session.get('access_token', '')[:20] + '...' if session.get('access_token') else None,
+        'jwt_token_preview': session.get('jwt_token', '')[:20] + '...' if session.get('jwt_token') else None,
+        'all_session_keys': list(session.keys())
+    }
+    return jsonify(session_info)
+
+
+@app.route('/debug/backend-test')
+def debug_backend_test():
+    """백엔드 연결 테스트"""
+    try:
+        # 1. Health check
+        health_response = requests.get(f'{BACKEND_API_URL}/health', timeout=5)
+
+        # 2. 토큰 있을 때와 없을 때 playlist 요청 테스트
+        headers_without_token = {'Content-Type': 'application/json'}
+        playlist_without_token = requests.get(f'{BACKEND_API_URL}/playlist', headers=headers_without_token, timeout=5)
+
+        headers_with_token = get_auth_headers()
+        playlist_with_token = requests.get(f'{BACKEND_API_URL}/playlist', headers=headers_with_token, timeout=5)
+
+        return jsonify({
+            'health_check': {
+                'status': health_response.status_code,
+                'response': health_response.json() if health_response.status_code == 200 else health_response.text
+            },
+            'playlist_without_token': {
+                'status': playlist_without_token.status_code,
+                'response': playlist_without_token.json() if playlist_without_token.status_code == 200 else playlist_without_token.text
+            },
+            'playlist_with_token': {
+                'status': playlist_with_token.status_code,
+                'response': playlist_with_token.json() if playlist_with_token.status_code == 200 else playlist_with_token.text,
+                'headers_sent': headers_with_token
+            }
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
 
 if __name__ == '__main__':
     app.run(debug=True)
