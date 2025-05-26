@@ -711,25 +711,97 @@ def download_music(music_id):
 
 @app.route('/delete/<music_id>', methods=['DELETE'])
 def delete_music(music_id):
-    """음악 삭제"""
-    music_list = load_music_data()
+    """음악 삭제 - 백엔드 API 호출"""
+    try:
+        # 로그인 상태 확인
+        if not is_user_logged_in():
+            return jsonify({
+                'success': False,
+                'error': '로그인이 필요합니다.'
+            }), 401
 
-    for i, music in enumerate(music_list):
-        if music['id'] == music_id:
-            if 'user_id' in session and music['user_id'] != session['user_id']:
+        # 백엔드 API 호출 시도
+        if check_backend_connection():
+            try:
+                headers = get_auth_headers()
+                
+                response = requests.delete(
+                    f'{BACKEND_API_URL}/music/{music_id}',
+                    headers=headers,
+                    timeout=10
+                )
+                
+                print(f"백엔드 삭제 응답: {response.status_code} - {response.text}")
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    if result.get('success'):
+                        print(f"✓ 백엔드에서 음악 삭제 성공: 음악 ID {music_id}")
+                        return jsonify({
+                            'success': True,
+                            'message': '음악이 삭제되었습니다.'
+                        })
+                    else:
+                        return jsonify({
+                            'success': False,
+                            'error': result.get('message', '음악 삭제에 실패했습니다.')
+                        }), 400
+                elif response.status_code == 401:
+                    return jsonify({
+                        'success': False,
+                        'error': '인증이 필요합니다.'
+                    }), 401
+                elif response.status_code == 403:
+                    return jsonify({
+                        'success': False,
+                        'error': '이 음악을 삭제할 권한이 없습니다.'
+                    }), 403
+                elif response.status_code == 404:
+                    return jsonify({
+                        'success': False,
+                        'error': '삭제할 음악을 찾을 수 없습니다.'
+                    }), 404
+                else:
+                    return jsonify({
+                        'success': False,
+                        'error': f'서버 오류: {response.status_code}'
+                    }), response.status_code
+                    
+            except requests.RequestException as e:
+                print(f"백엔드 삭제 요청 오류: {e}")
+                # 백엔드 실패 시 로컬 처리로 fallback
+
+        # 로컬 처리 (백엔드 연결 실패 시)
+        print("백엔드 연결 실패. 로컬 삭제 처리를 시도합니다.")
+        music_list = load_music_data()
+        
+        for i, music in enumerate(music_list):
+            if music['id'] == music_id:
+                if 'user_id' in session and music['user_id'] != session['user_id']:
+                    return jsonify({
+                        'success': False,
+                        'error': '이 음악을 삭제할 권한이 없습니다.'
+                    }), 403
+
+                del music_list[i]
+                save_music_data(music_list)
+                print(f"✓ 로컬에서 음악 삭제 성공: 음악 ID {music_id}")
                 return jsonify({
-                    'success': False,
-                    'error': '이 음악을 삭제할 권한이 없습니다.'
-                }), 403
+                    'success': True,
+                    'message': '음악이 삭제되었습니다.'
+                })
 
-            del music_list[i]
-            save_music_data(music_list)
-            return jsonify({'success': True})
+        return jsonify({
+            'success': False,
+            'error': '음악을 찾을 수 없습니다.'
+        }), 404
 
-    return jsonify({
-        'success': False,
-        'error': '음악을 찾을 수 없습니다.'
-    }), 404
+    except Exception as e:
+        print(f"음악 삭제 오류: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'서버 오류: {str(e)}'
+        }), 500
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -775,8 +847,6 @@ def inject_user():
         'user_email': session.get('user_email', '')
     }
 
-
-# app.py에 추가할 디버깅 라우트
 
 @app.route('/debug/session')
 def debug_session():
