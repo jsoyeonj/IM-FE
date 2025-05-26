@@ -167,17 +167,13 @@ def create():
     return render_template('create.html')
 
 
+# 기존 /generate-music 라우트를 수정
 @app.route('/generate-music', methods=['POST'])
 def generate_music():
-    """텍스트 기반 음악 생성 - 로그인 상태 확인 추가"""
+    """기본 설정 저장 - 실제 음악 생성하지 않고 다음 단계로"""
     try:
         data = request.get_json()
-        print(f"음악 생성 요청 데이터: {data}")
-        print(f"환경변수 BACKEND_API_URL: {BACKEND_API_URL}")
-
-        # 로그인 상태 확인
-        user_logged_in = is_user_logged_in()
-        print(f"👤 사용자 로그인 상태: {user_logged_in}")
+        print(f"기본 설정 저장 요청: {data}")
 
         # 필수 파라미터 확인
         if not data or 'mood' not in data or 'location' not in data:
@@ -186,115 +182,39 @@ def generate_music():
                 'error': '분위기와 장소 정보가 필요합니다.'
             }), 400
 
-        # 백엔드 연결 확인
-        backend_connected = check_backend_connection()
-        print(f"백엔드 연결 상태: {backend_connected}")
-
-        if backend_connected:
-            # 백엔드 API 호출 시도
-            try:
-                prompt1 = f"{data['mood']} 분위기의 {data['location']} 음악, 템포 {data.get('speed', 50)}"
-
-                api_data = {
-                    'prompt1': prompt1
-                }
-
-                print(f"백엔드로 전송할 데이터: {api_data}")
-                print(f"요청 URL: {BACKEND_API_URL}/generate-music")
-
-                # 인증 헤더 포함
-                headers = get_auth_headers()
-                print(f"요청 헤더: {headers}")
-
-                response = requests.post(
-                    f'{BACKEND_API_URL}/generate-music',
-                    json=api_data,
-                    headers=headers,
-                    timeout=30
-                )
-
-                print(f"백엔드 응답 상태: {response.status_code}")
-                print(f"백엔드 응답 내용: {response.text}")
-
-                if response.status_code == 200:
-                    result = response.json()
-                    print(f"백엔드 응답 파싱: {result}")
-
-                    if result.get('success'):
-                        music_data = result.get('data', {})
-                        music_url = music_data.get('musicUrl')
-                        title = music_data.get('title')
-                        music_id = str(uuid.uuid4())
-
-                        if user_logged_in:
-                            print(f"✓ 로그인된 사용자: 백엔드에서 music_tb + mymusic_tb에 저장됨")
-                        else:
-                            print(f"✓ 익명 사용자: 백엔드에서 music_tb에만 저장됨")
-
-                        print(f"✓ 백엔드에서 음악 생성 성공: {title}")
-
-                        return jsonify({
-                            'success': True,
-                            'music_id': music_id,
-                            'music_url': music_url,
-                            'title': title,
-                            'next_step': url_for('detail_input', music_id=music_id)
-                        })
-                    else:
-                        print(f"백엔드 응답 실패: {result.get('message', '알 수 없는 오류')}")
-                elif response.status_code == 401:
-                    print("❌ 인증 실패: JWT 토큰이 유효하지 않습니다.")
-                else:
-                    print(f"백엔드 HTTP 오류: {response.status_code} - {response.text}")
-            except requests.RequestException as e:
-                print(f"백엔드 요청 예외: {e}")
-            except Exception as e:
-                print(f"백엔드 처리 예외: {e}")
-
-        # 백엔드 연결 실패 시 로컬 처리
-        print("⚠️ 백엔드 서버에 연결할 수 없거나 음악 생성에 실패했습니다. 로컬 모드로 실행합니다.")
-
-        music_id = str(uuid.uuid4())
-        created_at = datetime.datetime.now().isoformat()
-
-        # 로컬 음악 정보 생성
-        music_data = {
-            'id': music_id,
-            'title': f'{data["mood"]} 분위기의 {data["location"]} 음악',
-            'speed': data['speed'],
-            'mood': data['mood'],
-            'location': data['location'],
-            'created_at': created_at,
-            'file_path': f'{music_id}.mp3',
-            'user_id': session.get('user_id', 'anonymous')
+        # 설정값을 세션에 저장 (음악 생성하지 않음)
+        session['music_settings'] = {
+            'speed': data.get('speed', 50),
+            'mood': data.get('mood'),
+            'location': data.get('location')
         }
 
-        # 로컬 음악 데이터에 추가
-        all_music = load_music_data()
-        all_music.append(music_data)
-        save_music_data(all_music)
+        print(f"✓ 기본 설정 세션에 저장: {session['music_settings']}")
 
-        print(f"✓ 로컬에 음악 데이터 저장: {music_data['title']}")
+        # 임시 ID 생성 (실제 음악은 아직 생성되지 않음)
+        temp_id = str(uuid.uuid4())
 
         return jsonify({
             'success': True,
-            'music_id': music_id,
-            'next_step': url_for('detail_input', music_id=music_id)
+            'music_id': temp_id,
+            'next_step': url_for('detail_input', music_id=temp_id)
         })
 
     except Exception as e:
-        print(f"음악 생성 오류: {e}")
+        print(f"기본 설정 저장 오류: {e}")
         return jsonify({
             'success': False,
             'error': f'서버 오류: {str(e)}'
         }), 500
 
 
+# 기존 /generate-music-with-detail을 실제 음악 생성으로 수정
 @app.route('/generate-music-with-detail', methods=['POST'])
 def generate_music_with_detail():
-    """상세 내용을 반영한 음악 생성"""
+    """실제 음악 생성 - 기본 설정 + 상세 내용 통합"""
     try:
         data = request.get_json()
+        print(f"최종 음악 생성 요청: {data}")
 
         if 'detail_text' not in data:
             return jsonify({
@@ -305,12 +225,29 @@ def generate_music_with_detail():
         detail_text = data.get('detail_text')
         music_id = data.get('music_id', '')
 
+        # 세션에서 기본 설정 불러오기
+        music_settings = session.get('music_settings', {})
+        print(f"저장된 기본 설정: {music_settings}")
+
+        # 로그인 상태 확인
+        user_logged_in = is_user_logged_in()
+        print(f"👤 사용자 로그인 상태: {user_logged_in}")
+
+        # 통합된 프롬프트 생성
+        if music_settings:
+            prompt1 = f"{music_settings.get('mood', '')} 분위기의 {music_settings.get('location', '')} 음악, {detail_text}"
+            if music_settings.get('speed'):
+                prompt1 += f", 템포 {music_settings.get('speed')}"
+        else:
+            prompt1 = detail_text
+
+        print(f"통합된 프롬프트: {prompt1}")
+
         # 백엔드 연결 확인 및 시도
         if check_backend_connection():
             try:
-                # prompt2 제거
                 api_data = {
-                    'prompt1': detail_text
+                    'prompt1': prompt1
                 }
 
                 response = requests.post(
@@ -326,7 +263,10 @@ def generate_music_with_detail():
                         music_data = result.get('data', {})
                         new_music_id = str(uuid.uuid4())
 
-                        print(f"✓ 백엔드에서 상세 음악 생성 성공: {music_data.get('title')}")
+                        print(f"✓ 백엔드에서 최종 음악 생성 성공: {music_data.get('title')}")
+
+                        # 세션에서 설정값 제거
+                        session.pop('music_settings', None)
 
                         return jsonify({
                             'success': True,
@@ -336,11 +276,11 @@ def generate_music_with_detail():
                             'redirect_url': url_for('generation_complete', music_id=new_music_id)
                         })
                 else:
-                    print(f"백엔드 상세 음악 생성 오류: {response.status_code} - {response.text}")
-            except requests.RequestException:
-                pass
+                    print(f"백엔드 음악 생성 오류: {response.status_code} - {response.text}")
+            except requests.RequestException as e:
+                print(f"백엔드 요청 오류: {e}")
 
-        # 로컬 처리
+        # 로컬 처리 (백엔드 연결 실패 시)
         if not music_id:
             music_id = str(uuid.uuid4())
 
@@ -348,8 +288,10 @@ def generate_music_with_detail():
 
         new_music_data = {
             'id': music_id,
-            'title': f"{detail_text[:20]}{'...' if len(detail_text) > 20 else ''}",
+            'title': f"{detail_text[:30]}{'...' if len(detail_text) > 30 else ''}",
+            'full_prompt': prompt1,
             'detail_text': detail_text,
+            'original_settings': music_settings,
             'created_at': created_at,
             'file_path': f'{music_id}.mp3',
             'user_id': session.get('user_id', 'anonymous')
@@ -357,15 +299,24 @@ def generate_music_with_detail():
 
         music_list = load_music_data()
 
-        if music_id and any(music['id'] == music_id for music in music_list):
-            for i, music in enumerate(music_list):
-                if music['id'] == music_id:
-                    music_list[i].update(new_music_data)
-                    break
+        # 기존 임시 데이터가 있으면 교체, 없으면 새로 추가
+        existing_index = -1
+        for i, music in enumerate(music_list):
+            if music['id'] == music_id:
+                existing_index = i
+                break
+
+        if existing_index >= 0:
+            music_list[existing_index] = new_music_data
         else:
             music_list.append(new_music_data)
 
         save_music_data(music_list)
+
+        # 세션에서 설정값 제거
+        session.pop('music_settings', None)
+
+        print(f"✓ 로컬에 최종 음악 데이터 저장: {new_music_data['title']}")
 
         return jsonify({
             'success': True,
@@ -374,6 +325,7 @@ def generate_music_with_detail():
         })
 
     except Exception as e:
+        print(f"최종 음악 생성 오류: {e}")
         return jsonify({
             'success': False,
             'error': f'서버 오류: {str(e)}'
