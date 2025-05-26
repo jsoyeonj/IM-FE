@@ -624,6 +624,18 @@ def playlist():
         return render_template('playlist.html', music_list=[], music=None)
 
 
+@app.route('/playlist-main')
+def playlist_main():
+    """메인 플레이리스트 페이지 (실시간 생성 + 인기 음악)"""
+    logged_in = 'user_id' in session
+    user_name = session.get('user_name', '')
+    user_picture = session.get('user_picture', '')
+
+    return render_template('playlist_main.html',
+                           logged_in=logged_in,
+                           user_name=user_name,
+                           user_picture=user_picture)
+
 @app.route('/generation-complete')
 def generation_complete():
     """음악 생성 완료 페이지"""

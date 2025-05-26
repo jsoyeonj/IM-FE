@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Croffle - 플레이리스트</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Pretendard variable', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(119deg, #fff 0%, #dfd0ff 46%, #faf7ff 100%, #cc46b7 100%);
+        }
+
+        .container {
+            width: 100%;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .back-button {
+            position: absolute;
+            left: 4rem;
+            top: 2rem;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .back-button p {
+            font-size: 2rem;
+            font-weight: 300;
+            color: #000;
+            letter-spacing: 0.125rem;
+            text-transform: capitalize;
+        }
+
+        .main-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            margin: 4rem 0 3rem 0;
+            padding-left: 3rem;
+        }
+
+        .main-title {
+            color: #513d6c;
+            font-size: 2rem;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .create-again-btn {
+            padding: 0.8rem 1.5rem;
+            background: linear-gradient(120deg, #dbbeff -0.41%, rgba(212, 210, 255, 0.98) 6.15%, rgba(219, 200, 243, 0.76) 35.4%, rgba(219, 200, 243, 0.76) 78.69%);
+            color: #fff;
+            border: none;
+            border-radius: 2rem;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15);
+            white-space: nowrap;
+        }
+
+        .create-again-btn:hover {
+            transform: scale(1.05);
+            background: linear-gradient(120deg, #946ec4 0%, #513d6c 100%);
+        }
+
+        .main-content {
+            display: flex;
+            justify-content: center;
+            gap: 4rem;
+            margin-top: 2rem;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .playlist-section {
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .section-title {
+            color: #513d6c;
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .section-subtitle {
+            color: #946ec4;
+            font-size: 0.9rem;
+            font-weight: 400;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .music-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .music-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 2rem;
+            box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .music-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .music-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+        }
+
+        .music-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #946ec4, #513d6c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .music-details {
+            flex: 1;
+        }
+
+        .music-title {
+            color: #333;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 0.2rem;
+        }
+
+        .music-meta {
+            color: #666;
+            font-size: 0.8rem;
+        }
+
+        .music-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .like-button {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.3rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .like-button:hover {
+            background: rgba(148, 110, 196, 0.1);
+        }
+
+        .like-button.liked {
+            color: #e74c3c;
+        }
+
+        .like-count {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .play-button {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #513d6c;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .play-button:hover {
+            background: #946ec4;
+            transform: scale(1.1);
+        }
+
+        .play-icon {
+            width: 12px;
+            height: 12px;
+            fill: white;
+        }
+
+        .pause-icon {
+            width: 10px;
+            height: 10px;
+            fill: white;
+        }
+
+        .popular-section {
+            border: 2px solid #946ec4;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .recent-section {
+            border: 2px solid #946ec4;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 2rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #666;
+            padding: 2rem;
+            font-size: 0.9rem;
+        }
+
+        /* 반응형 */
+        @media (max-width: 768px) {
+            .main-header {
+                flex-direction: column;
+                gap: 1.5rem;
+                margin: 3rem 0 2rem 0;
+                padding-left: 0;
+            }
+
+            .main-title {
+                font-size: 1.5rem;
+            }
+
+            .create-again-btn {
+                font-size: 0.9rem;
+                padding: 0.7rem 1.2rem;
+            }
+
+            .main-content {
+                flex-direction: column;
+                gap: 2rem;
+                margin-top: 2rem;
+            }
+
+            .back-button {
+                left: 2rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .playlist-section {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 뒤로가기 버튼 -->
+        <div class="back-button" onclick="goHome()">
+            <p>Croffle</p>
+        </div>
+
+        <!-- 메인 헤더 (타이틀 + 버튼) -->
+        <div class="main-header">
+            <div class="main-title">
+                다른 사람들의 음악이에요.<br>마음에 들었다면 좋아요를 눌러보세요!
+            </div>
+            <button class="create-again-btn" onclick="goToCreate()">
+                또 만들고 싶어요
+            </button>
+        </div>
+
+        <div class="main-content">
+            <!-- 실시간 생성 섹션 -->
+            <div class="playlist-section recent-section">
+                <h2 class="section-title">실시간 생성!</h2>
+
+                <div class="music-list" id="recentMusicList">
+                    <div class="loading">음악을 불러오는 중...</div>
+                </div>
+            </div>
+
+            <!-- 인기 음악 섹션 -->
+            <div class="playlist-section popular-section">
+                <h2 class="section-title">이번주 인기음악</h2>
+
+                <div class="music-list" id="popularMusicList">
+                    <div class="loading">인기 음악을 불러오는 중...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentAudio = null;
+        let currentPlayingId = null;
+
+        // 샘플 데이터
+        const sampleRecentMusic = [
+            { id: 1, title: '신나는 베이스 음악', artist: '신나게 베이스', likes: 12, isLiked: false },
+            { id: 2, title: '편안한 카페 음악', artist: '편안한 음악', likes: 8, isLiked: true },
+            { id: 3, title: '집중을 위한 로파이', artist: '집중하자', likes: 15, isLiked: false },
+            { id: 4, title: '운동할 때 듣는 음악', artist: '운동음악', likes: 6, isLiked: false },
+            { id: 5, title: '감성적인 피아노', artist: '감성음악', likes: 20, isLiked: true }
+        ];
+
+        const samplePopularMusic = [
+            { id: 6, title: '감성적인 피아노', artist: '감성음악', likes: 45, isLiked: true },
+            { id: 7, title: '신나는 댄스 음악', artist: '댄스음악', likes: 38, isLiked: false },
+            { id: 8, title: '잔잔한 어쿠스틱', artist: '어쿠스틱', likes: 32, isLiked: true },
+            { id: 9, title: '힙합 비트', artist: '힙합음악', likes: 28, isLiked: false },
+            { id: 10, title: '클래식 모던', artist: '클래식', likes: 25, isLiked: false }
+        ];
+
+        // 음악 아이템 생성 함수
+        function createMusicItem(music) {
+            return `
+                <div class="music-item" data-id="${music.id}">
+                    <div class="music-info">
+                        <div class="music-avatar">${music.artist.charAt(0)}</div>
+                        <div class="music-details">
+                            <div class="music-title">${music.title}</div>
+                            <div class="music-meta">${music.artist}</div>
+                        </div>
+                    </div>
+                    <div class="music-controls">
+                        <button class="like-button ${music.isLiked ? 'liked' : ''}" onclick="toggleLike(${music.id})">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="${music.isLiked ? '#e74c3c' : '#666'}">
+                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                            </svg>
+                            <span class="like-count" id="likeCount-${music.id}">${music.likes}</span>
+                        </button>
+                        <button class="play-button" onclick="togglePlay(${music.id})">
+                            <svg class="play-icon" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 플레이리스트 렌더링
+        function renderPlaylists() {
+            const recentList = document.getElementById('recentMusicList');
+            const popularList = document.getElementById('popularMusicList');
+
+            // 실시간 생성 음악 렌더링
+            recentList.innerHTML = sampleRecentMusic.map(music => createMusicItem(music)).join('');
+
+            // 인기 음악 렌더링 (좋아요 순으로 정렬하여 상위 5개만)
+            const sortedPopular = samplePopularMusic.sort((a, b) => b.likes - a.likes).slice(0, 5);
+            popularList.innerHTML = sortedPopular.map(music => createMusicItem(music)).join('');
+        }
+
+        // 좋아요 토글 함수
+        function toggleLike(musicId) {
+            // 모든 음악 데이터에서 찾기
+            let music = sampleRecentMusic.find(m => m.id === musicId) ||
+                       samplePopularMusic.find(m => m.id === musicId);
+
+            if (music) {
+                music.isLiked = !music.isLiked;
+                music.likes += music.isLiked ? 1 : -1;
+
+                // UI 업데이트
+                const likeButton = document.querySelector(`[data-id="${musicId}"] .like-button`);
+                const likeCount = document.getElementById(`likeCount-${musicId}`);
+                const heartIcon = likeButton.querySelector('svg');
+
+                likeButton.classList.toggle('liked', music.isLiked);
+                heartIcon.setAttribute('fill', music.isLiked ? '#e74c3c' : '#666');
+                likeCount.textContent = music.likes;
+
+                // 좋아요 애니메이션
+                likeButton.style.transform = 'scale(1.2)';
+                setTimeout(() => {
+                    likeButton.style.transform = 'scale(1)';
+                }, 200);
+
+                console.log(`음악 ${musicId} 좋아요 ${music.isLiked ? '추가' : '취소'}: ${music.likes}개`);
+            }
+        }
+
+        // 재생/일시정지 토글
+        function togglePlay(musicId) {
+            const playButton = document.querySelector(`[data-id="${musicId}"] .play-button`);
+            const playIcon = playButton.querySelector('.play-icon, .pause-icon');
+
+            // 다른 음악이 재생 중이면 중지
+            if (currentPlayingId && currentPlayingId !== musicId) {
+                const prevButton = document.querySelector(`[data-id="${currentPlayingId}"] .play-button`);
+                const prevIcon = prevButton.querySelector('.pause-icon');
+                if (prevIcon) {
+                    prevIcon.outerHTML = `
+                        <svg class="play-icon" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                    `;
+                }
+            }
+
+            // 현재 음악 재생/일시정지 토글
+            if (currentPlayingId === musicId) {
+                // 일시정지
+                currentPlayingId = null;
+                playIcon.outerHTML = `
+                    <svg class="play-icon" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                `;
+                console.log(`음악 ${musicId} 일시정지`);
+            } else {
+                // 재생
+                currentPlayingId = musicId;
+                playIcon.outerHTML = `
+                    <svg class="pause-icon" viewBox="0 0 24 24">
+                        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                    </svg>
+                `;
+                console.log(`음악 ${musicId} 재생 시작`);
+            }
+        }
+
+        // 홈으로 이동
+        function goHome() {
+            // 실제 구현에서는 라우팅 로직 추가
+            console.log('홈으로 이동');
+            // window.location.href = '/';
+        }
+
+        // 음악 생성 페이지로 이동
+        function goToCreate() {
+            console.log('음악 생성 페이지로 이동');
+            window.location.href = '/create';
+        }
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            renderPlaylists();
+
+            // 실제 API 호출 시뮬레이션 (3초 후)
+            setTimeout(() => {
+                console.log('API에서 실제 데이터 로드 완료');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

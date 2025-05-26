@@ -249,13 +249,9 @@
     }
 
     function goToPlaylist() {
-        {% if music_id %}
-            window.location.href = "{{ url_for('playlist') }}?music_id={{ music_id }}";
-        {% else %}
-            window.location.href = "{{ url_for('playlist') }}";
-        {% endif %}
-    }
-
+    // 새로 만든 메인 플레이리스트 페이지로 이동
+    window.location.href = "{{ url_for('playlist_main') }}";
+}
     // 레코드 재생/일시정지 기능
     document.addEventListener('DOMContentLoaded', function() {
         const playBtn = document.getElementById('playBtn');
