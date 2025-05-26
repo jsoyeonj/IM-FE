@@ -235,19 +235,19 @@ def generate_music_with_detail():
 
         # 통합된 프롬프트 생성
         if music_settings:
-            prompt1 = f"{music_settings.get('mood', '')} 분위기의 {music_settings.get('location', '')} 음악, {detail_text}"
-            if music_settings.get('speed'):
-                prompt1 += f", 템포 {music_settings.get('speed')}"
+            prompt1 =  f"{music_settings.get('mood', '')} 분위기의 {music_settings.get('location', '')} 음악, 템포 {music_settings.get('speed')}"
+            prompt2 = f"{detail_text}" 
         else:
             prompt1 = detail_text
 
-        print(f"통합된 프롬프트: {prompt1}")
+        print(f"통합된 프롬프트: {prompt2}")
 
         # 백엔드 연결 확인 및 시도
         if check_backend_connection():
             try:
                 api_data = {
-                    'prompt1': prompt1
+                    'prompt1': prompt1,
+                    'prompt2': prompt2
                 }
 
                 response = requests.post(
