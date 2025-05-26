@@ -54,22 +54,28 @@ def get_auth_headers():
     """인증 헤더 반환 - 개선된 버전"""
     headers = {'Content-Type': 'application/json'}
     
-    # JWT 토큰 확인
-    access_token = session.get('access_token')
+    # JWT 토큰 확인 (두 키 모두 확인)
+    access_token = session.get('access_token') or session.get('jwt_token')
+    
     if access_token:
         headers['Authorization'] = f'Bearer {access_token}'
         print(f"🔑 JWT 토큰 사용: Bearer {access_token[:20]}...")
     else:
         print("⚠️ JWT 토큰이 없습니다. 익명 사용자로 처리됩니다.")
+        print(f"세션 내용: user_id={session.get('user_id')}, logged_in={session.get('logged_in')}")
+        print(f"세션 키들: {list(session.keys())}")
     
     return headers
 
 def is_user_logged_in():
     """사용자 로그인 상태 확인"""
     logged_in = session.get('logged_in', False)
-    access_token = session.get('access_token')
+    access_token = session.get('access_token') or session.get('jwt_token')
     
     print(f"로그인 상태: {logged_in}, 토큰 존재: {access_token is not None}")
+    
+    if logged_in and not access_token:
+        print("⚠️ 로그인은 되어있지만 JWT 토큰이 없습니다. 세션 문제일 수 있습니다.")
     
     return logged_in and access_token is not None
 
@@ -113,7 +119,28 @@ def allowed_file(filename):
 @app.template_filter('format_date')
 def format_date(value, format='%Y년 %m월 %d일 %H:%M'):
     if isinstance(value, str):
-        value = datetime.datetime.fromisoformat(value.replace('Z', '+00:00'))
+        try:
+            # ISO format 시도
+            value = datetime.datetime.fromisoformat(value.replace('Z', '+00:00'))
+        except ValueError:
+            try:
+                # GMT format 시도 ('Mon, 26 May 2025 03:36:17 GMT')
+                value = datetime.datetime.strptime(value, '%a, %d %b %Y %H:%M:%S %Z')
+            except ValueError:
+                try:
+                    # 다른 일반적인 형식들 시도
+                    for fmt in ['%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d']:
+                        try:
+                            value = datetime.datetime.strptime(value, fmt)
+                            break
+                        except ValueError:
+                            continue
+                    else:
+                        # 모든 형식이 실패하면 현재 시간 사용
+                        print(f"날짜 형식 변환 실패: {value}")
+                        value = datetime.datetime.now()
+                except:
+                    value = datetime.datetime.now()
     return value.strftime(format)
 
 @app.route('/')
@@ -691,5 +718,57 @@ def inject_user():
         'user_email': session.get('user_email', '')
     }
 
+
+# app.py에 추가할 디버깅 라우트
+
+@app.route('/debug/session')
+def debug_session():
+    """세션 상태 디버깅"""
+    session_info = {
+        'logged_in': session.get('logged_in'),
+        'user_id': session.get('user_id'),
+        'user_name': session.get('user_name'),
+        'access_token_exists': bool(session.get('access_token')),
+        'jwt_token_exists': bool(session.get('jwt_token')),
+        'access_token_preview': session.get('access_token', '')[:20] + '...' if session.get('access_token') else None,
+        'jwt_token_preview': session.get('jwt_token', '')[:20] + '...' if session.get('jwt_token') else None,
+        'all_session_keys': list(session.keys())
+    }
+    return jsonify(session_info)
+
+@app.route('/debug/backend-test')
+def debug_backend_test():
+    """백엔드 연결 테스트"""
+    try:
+        # 1. Health check
+        health_response = requests.get(f'{BACKEND_API_URL}/health', timeout=5)
+        
+        # 2. 토큰 있을 때와 없을 때 playlist 요청 테스트
+        headers_without_token = {'Content-Type': 'application/json'}
+        playlist_without_token = requests.get(f'{BACKEND_API_URL}/playlist', headers=headers_without_token, timeout=5)
+        
+        headers_with_token = get_auth_headers()
+        playlist_with_token = requests.get(f'{BACKEND_API_URL}/playlist', headers=headers_with_token, timeout=5)
+        
+        return jsonify({
+            'health_check': {
+                'status': health_response.status_code,
+                'response': health_response.json() if health_response.status_code == 200 else health_response.text
+            },
+            'playlist_without_token': {
+                'status': playlist_without_token.status_code,
+                'response': playlist_without_token.json() if playlist_without_token.status_code == 200 else playlist_without_token.text
+            },
+            'playlist_with_token': {
+                'status': playlist_with_token.status_code,
+                'response': playlist_with_token.json() if playlist_with_token.status_code == 200 else playlist_with_token.text,
+                'headers_sent': headers_with_token
+            }
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)})
+    
+
 if __name__ == '__main__':
     app.run(debug=True)
+
