@@ -98,14 +98,6 @@
             text-align: center;
         }
 
-        .section-subtitle {
-            color: #946ec4;
-            font-size: 0.9rem;
-            font-weight: 400;
-            margin-bottom: 1.5rem;
-            text-align: center;
-        }
-
         .music-list {
             display: flex;
             flex-direction: column;
@@ -240,12 +232,6 @@
             background: rgba(255, 255, 255, 0.3);
         }
 
-        .loading {
-            text-align: center;
-            color: #666;
-            padding: 2rem;
-        }
-
         .empty-state {
             text-align: center;
             color: #666;
@@ -314,7 +300,34 @@
                 <h2 class="section-title">실시간 생성!</h2>
 
                 <div class="music-list" id="recentMusicList">
-                    <div class="loading">음악을 불러오는 중...</div>
+                    {% if recent_music_list %}
+                        {% for music in recent_music_list %}
+                        <div class="music-item" data-id="{{ music.id }}" data-url="{{ music.musicUrl }}">
+                            <div class="music-info">
+                                <div class="music-avatar">{{ music.title[0] if music.title else 'M' }}</div>
+                                <div class="music-details">
+                                    <div class="music-title">{{ music.title }}</div>
+                                    <div class="music-meta">{{ music.createdAt|format_date('%m월 %d일 %H:%M') if music.createdAt else '방금' }}</div>
+                                </div>
+                            </div>
+                            <div class="music-controls">
+                                <button class="like-button {{ 'liked' if music.pressed else '' }}" onclick="toggleLike({{ music.id }})">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="{{ '#e74c3c' if music.pressed else '#666' }}">
+                                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                    </svg>
+                                    <span class="like-count" id="likeCount-{{ music.id }}">{{ music.likeCount or 0 }}</span>
+                                </button>
+                                <button class="play-button" onclick="togglePlay({{ music.id }})">
+                                    <svg class="play-icon" viewBox="0 0 24 24">
+                                        <path d="M8 5v14l11-7z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">백엔드 서버에 연결할 수 없습니다.<br>음악 생성 후 다시 시도해주세요.</div>
+                    {% endif %}
                 </div>
             </div>
 
@@ -323,7 +336,34 @@
                 <h2 class="section-title">이번주 인기음악</h2>
 
                 <div class="music-list" id="popularMusicList">
-                    <div class="loading">인기 음악을 불러오는 중...</div>
+                    {% if popular_music_list %}
+                        {% for music in popular_music_list %}
+                        <div class="music-item" data-id="{{ music.id }}" data-url="{{ music.musicUrl }}">
+                            <div class="music-info">
+                                <div class="music-avatar">{{ music.title[0] if music.title else 'M' }}</div>
+                                <div class="music-details">
+                                    <div class="music-title">{{ music.title }}</div>
+                                    <div class="music-meta">{{ music.createdAt|format_date('%m월 %d일') if music.createdAt else '최근' }}</div>
+                                </div>
+                            </div>
+                            <div class="music-controls">
+                                <button class="like-button {{ 'liked' if music.pressed else '' }}" onclick="toggleLike({{ music.id }})">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="{{ '#e74c3c' if music.pressed else '#666' }}">
+                                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                    </svg>
+                                    <span class="like-count" id="likeCount-{{ music.id }}">{{ music.likeCount or 0 }}</span>
+                                </button>
+                                <button class="play-button" onclick="togglePlay({{ music.id }})">
+                                    <svg class="play-icon" viewBox="0 0 24 24">
+                                        <path d="M8 5v14l11-7z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">백엔드 서버에 연결할 수 없습니다.<br>음악 생성 후 다시 시도해주세요.</div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -333,96 +373,116 @@
         let currentAudio = null;
         let currentPlayingId = null;
 
-        // 샘플 데이터
-        const sampleRecentMusic = [
-            { id: 1, title: '신나는 베이스 음악', artist: '신나게 베이스', likes: 12, isLiked: false },
-            { id: 2, title: '편안한 카페 음악', artist: '편안한 음악', likes: 8, isLiked: true },
-            { id: 3, title: '집중을 위한 로파이', artist: '집중하자', likes: 15, isLiked: false },
-            { id: 4, title: '운동할 때 듣는 음악', artist: '운동음악', likes: 6, isLiked: false },
-            { id: 5, title: '감성적인 피아노', artist: '감성음악', likes: 20, isLiked: true }
-        ];
-
-        const samplePopularMusic = [
-            { id: 6, title: '감성적인 피아노', artist: '감성음악', likes: 45, isLiked: true },
-            { id: 7, title: '신나는 댄스 음악', artist: '댄스음악', likes: 38, isLiked: false },
-            { id: 8, title: '잔잔한 어쿠스틱', artist: '어쿠스틱', likes: 32, isLiked: true },
-            { id: 9, title: '힙합 비트', artist: '힙합음악', likes: 28, isLiked: false },
-            { id: 10, title: '클래식 모던', artist: '클래식', likes: 25, isLiked: false }
-        ];
-
-        // 음악 아이템 생성 함수
-        function createMusicItem(music) {
-            return `
-                <div class="music-item" data-id="${music.id}">
-                    <div class="music-info">
-                        <div class="music-avatar">${music.artist.charAt(0)}</div>
-                        <div class="music-details">
-                            <div class="music-title">${music.title}</div>
-                            <div class="music-meta">${music.artist}</div>
-                        </div>
-                    </div>
-                    <div class="music-controls">
-                        <button class="like-button ${music.isLiked ? 'liked' : ''}" onclick="toggleLike(${music.id})">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="${music.isLiked ? '#e74c3c' : '#666'}">
-                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                            </svg>
-                            <span class="like-count" id="likeCount-${music.id}">${music.likes}</span>
-                        </button>
-                        <button class="play-button" onclick="togglePlay(${music.id})">
-                            <svg class="play-icon" viewBox="0 0 24 24">
-                                <path d="M8 5v14l11-7z"/>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-
-        // 플레이리스트 렌더링
-        function renderPlaylists() {
-            const recentList = document.getElementById('recentMusicList');
-            const popularList = document.getElementById('popularMusicList');
-
-            // 실시간 생성 음악 렌더링
-            recentList.innerHTML = sampleRecentMusic.map(music => createMusicItem(music)).join('');
-
-            // 인기 음악 렌더링 (좋아요 순으로 정렬하여 상위 5개만)
-            const sortedPopular = samplePopularMusic.sort((a, b) => b.likes - a.likes).slice(0, 5);
-            popularList.innerHTML = sortedPopular.map(music => createMusicItem(music)).join('');
-        }
-
         // 좋아요 토글 함수
         function toggleLike(musicId) {
-            // 모든 음악 데이터에서 찾기
-            let music = sampleRecentMusic.find(m => m.id === musicId) ||
-                       samplePopularMusic.find(m => m.id === musicId);
-
-            if (music) {
-                music.isLiked = !music.isLiked;
-                music.likes += music.isLiked ? 1 : -1;
-
-                // UI 업데이트
-                const likeButton = document.querySelector(`[data-id="${musicId}"] .like-button`);
-                const likeCount = document.getElementById(`likeCount-${musicId}`);
-                const heartIcon = likeButton.querySelector('svg');
-
-                likeButton.classList.toggle('liked', music.isLiked);
-                heartIcon.setAttribute('fill', music.isLiked ? '#e74c3c' : '#666');
-                likeCount.textContent = music.likes;
-
-                // 좋아요 애니메이션
-                likeButton.style.transform = 'scale(1.2)';
-                setTimeout(() => {
-                    likeButton.style.transform = 'scale(1)';
-                }, 200);
-
-                console.log(`음악 ${musicId} 좋아요 ${music.isLiked ? '추가' : '취소'}: ${music.likes}개`);
+            // 모든 같은 음악 ID를 가진 요소들 찾기 (최신음악과 인기음악 양쪽에 있을 수 있음)
+            const allMusicItems = document.querySelectorAll(`[data-id="${musicId}"]`);
+            
+            if (allMusicItems.length === 0) {
+                console.error('음악 아이템을 찾을 수 없습니다:', musicId);
+                return;
             }
+
+            // 첫 번째 아이템을 기준으로 현재 좋아요 상태 확인
+            const firstItem = allMusicItems[0];
+            const firstLikeButton = firstItem.querySelector('.like-button');
+            const isCurrentlyLiked = firstLikeButton.classList.contains('liked');
+            const method = isCurrentlyLiked ? 'DELETE' : 'POST';
+            
+            console.log(`음악 ${musicId} 좋아요 ${isCurrentlyLiked ? '취소' : '추가'} 요청`);
+            
+            // 서버에 좋아요 요청 전송
+            fetch(`/api/music/${musicId}/like`, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log(`좋아요 ${isCurrentlyLiked ? '취소' : '추가'} 성공:`, data);
+                    
+                    // 모든 같은 음악 ID를 가진 아이템들 업데이트
+                    allMusicItems.forEach(musicItem => {
+                        const likeButton = musicItem.querySelector('.like-button');
+                        const likeCount = musicItem.querySelector('.like-count');
+                        const heartIcon = likeButton.querySelector('svg');
+                        
+                        if (!likeButton || !likeCount || !heartIcon) {
+                            console.error('필요한 요소를 찾을 수 없습니다:', musicItem);
+                            return;
+                        }
+
+                        // 좋아요 상태 토글
+                        const wasLiked = likeButton.classList.contains('liked');
+                        
+                        if (wasLiked) {
+                            // 좋아요 취소
+                            likeButton.classList.remove('liked');
+                            heartIcon.setAttribute('fill', '#666');
+                        } else {
+                            // 좋아요 추가
+                            likeButton.classList.add('liked');
+                            heartIcon.setAttribute('fill', '#e74c3c');
+                        }
+                        
+                        // 좋아요 수 업데이트
+                        const currentCount = parseInt(likeCount.textContent) || 0;
+                        const newCount = wasLiked ? Math.max(0, currentCount - 1) : currentCount + 1;
+                        likeCount.textContent = newCount;
+                        
+                        // 좋아요 애니메이션
+                        likeButton.style.transform = 'scale(1.2)';
+                        setTimeout(() => {
+                            likeButton.style.transform = 'scale(1)';
+                        }, 200);
+                    });
+                    
+                    // 인기 음악 리스트 재정렬 (좋아요 수 변경 후)
+                    setTimeout(() => {
+                        reorderPopularMusic();
+                    }, 300);
+                    
+                } else {
+                    console.error('좋아요 처리 실패:', data);
+                    alert(data.message || '좋아요 처리 중 오류가 발생했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('좋아요 API 오류:', error);
+                alert('서버 연결 오류가 발생했습니다.');
+            });
+        }
+
+        // 인기 음악 리스트 재정렬 함수
+        function reorderPopularMusic() {
+            const popularList = document.getElementById('popularMusicList');
+            const musicItems = Array.from(popularList.querySelectorAll('.music-item'));
+            
+            if (musicItems.length === 0) return;
+            
+            // 좋아요 수를 기준으로 정렬
+            musicItems.sort((a, b) => {
+                const aCount = parseInt(a.querySelector('.like-count').textContent) || 0;
+                const bCount = parseInt(b.querySelector('.like-count').textContent) || 0;
+                return bCount - aCount; // 내림차순 정렬
+            });
+            
+            // DOM에서 기존 아이템들 제거
+            musicItems.forEach(item => item.remove());
+            
+            // 정렬된 순서로 다시 추가
+            musicItems.forEach(item => popularList.appendChild(item));
+            
+            console.log('인기 음악 리스트 재정렬 완료');
         }
 
         // 재생/일시정지 토글
         function togglePlay(musicId) {
-            const playButton = document.querySelector(`[data-id="${musicId}"] .play-button`);
+            const musicItem = document.querySelector(`[data-id="${musicId}"]`);
+            const musicUrl = musicItem.getAttribute('data-url');
+            const playButton = musicItem.querySelector('.play-button');
             const playIcon = playButton.querySelector('.play-icon, .pause-icon');
 
             // 다른 음악이 재생 중이면 중지
@@ -436,12 +496,18 @@
                         </svg>
                     `;
                 }
+                if (currentAudio) {
+                    currentAudio.pause();
+                }
             }
 
             // 현재 음악 재생/일시정지 토글
             if (currentPlayingId === musicId) {
                 // 일시정지
                 currentPlayingId = null;
+                if (currentAudio) {
+                    currentAudio.pause();
+                }
                 playIcon.outerHTML = `
                     <svg class="play-icon" viewBox="0 0 24 24">
                         <path d="M8 5v14l11-7z"/>
@@ -451,36 +517,55 @@
             } else {
                 // 재생
                 currentPlayingId = musicId;
-                playIcon.outerHTML = `
-                    <svg class="pause-icon" viewBox="0 0 24 24">
-                        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
-                    </svg>
-                `;
-                console.log(`음악 ${musicId} 재생 시작`);
+                
+                // 오디오 객체 생성 및 재생
+                if (currentAudio) {
+                    currentAudio.pause();
+                }
+                
+                currentAudio = new Audio(musicUrl);
+                currentAudio.play().then(() => {
+                    playIcon.outerHTML = `
+                        <svg class="pause-icon" viewBox="0 0 24 24">
+                            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                        </svg>
+                    `;
+                    console.log(`음악 ${musicId} 재생 시작`);
+                }).catch(error => {
+                    console.error('음악 재생 오류:', error);
+                    alert('음악을 재생할 수 없습니다.');
+                    currentPlayingId = null;
+                });
+                
+                // 음악이 끝나면 UI 업데이트
+                currentAudio.addEventListener('ended', () => {
+                    currentPlayingId = null;
+                    playIcon.outerHTML = `
+                        <svg class="play-icon" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                    `;
+                });
             }
         }
 
         // 홈으로 이동
         function goHome() {
-            // 실제 구현에서는 라우팅 로직 추가
-            console.log('홈으로 이동');
-            // window.location.href = '/';
+            window.location.href = '/';
         }
 
         // 음악 생성 페이지로 이동
         function goToCreate() {
-            console.log('음악 생성 페이지로 이동');
             window.location.href = '/create';
         }
 
         // 페이지 로드 시 초기화
         document.addEventListener('DOMContentLoaded', function() {
-            renderPlaylists();
-
-            // 실제 API 호출 시뮬레이션 (3초 후)
-            setTimeout(() => {
-                console.log('API에서 실제 데이터 로드 완료');
-            }, 1000);
+            console.log('플레이리스트 메인 페이지 로드 완료');
+            
+            // 디버깅: 데이터 확인
+            console.log('최신 음악 개수:', document.querySelectorAll('#recentMusicList .music-item').length);
+            console.log('인기 음악 개수:', document.querySelectorAll('#popularMusicList .music-item').length);
         });
     </script>
 </body>

@@ -576,17 +576,79 @@ def playlist():
         return render_template('playlist.html', music_list=[], music=None)
 
 
+# app.py의 playlist_main 라우트를 다음과 같이 수정하세요
 @app.route('/playlist-main')
 def playlist_main():
     """메인 플레이리스트 페이지 (실시간 생성 + 인기 음악)"""
-    logged_in = 'user_id' in session
-    user_name = session.get('user_name', '')
-    user_picture = session.get('user_picture', '')
+    try:
+        logged_in = 'user_id' in session
+        user_name = session.get('user_name', '')
+        user_picture = session.get('user_picture', '')
+        
+        recent_music_list = []
+        popular_music_list = []
+        
+        # 백엔드 연결 시도
+        if check_backend_connection():
+            try:
+                headers = get_auth_headers()
+                
+                # 최신 음악 데이터 가져오기
+                recent_response = requests.get(
+                    f'{BACKEND_API_URL}/playlist',
+                    headers=headers,
+                    timeout=10
+                )
+                
+                # 인기 음악 데이터 가져오기  
+                popular_response = requests.get(
+                    f'{BACKEND_API_URL}/popular-playlist',
+                    headers=headers,
+                    timeout=10
+                )
+                
+                # 최신 음악 데이터 처리
+                if recent_response.status_code == 200:
+                    recent_result = recent_response.json()
+                    if recent_result.get('success'):
+                        recent_data = recent_result.get('data', {})
+                        recent_music_list = recent_data.get('musicList', [])
+                        print(f"✅ 백엔드에서 최신 음악 {len(recent_music_list)}개 로드 성공")
+                
+                # 인기 음악 데이터 처리
+                if popular_response.status_code == 200:
+                    popular_result = popular_response.json()
+                    if popular_result.get('success'):
+                        popular_data = popular_result.get('data', {})
+                        popular_music_list = popular_data.get('musicList', [])
+                        print(f"✅ 백엔드에서 인기 음악 {len(popular_music_list)}개 로드 성공")
+                        
+            except requests.RequestException as e:
+                print(f"백엔드 API 요청 오류: {e}")
+            except Exception as e:
+                print(f"백엔드 데이터 처리 오류: {e}")
+        
+        # 백엔드 연결 실패 시 빈 리스트 사용
+        if not recent_music_list and not popular_music_list:
+            print("⚠️ 백엔드 서버에 연결할 수 없습니다.")
 
-    return render_template('playlist_main.html',
-                           logged_in=logged_in,
-                           user_name=user_name,
-                           user_picture=user_picture)
+        return render_template('playlist_main.html',
+                            logged_in=logged_in,
+                            user_name=user_name,
+                            user_picture=user_picture,
+                            recent_music_list=recent_music_list,
+                            popular_music_list=popular_music_list)
+                            
+    except Exception as e:
+        print(f"플레이리스트 메인 페이지 오류: {e}")
+        # 오류 발생 시 빈 리스트로 페이지 렌더링
+        return render_template('playlist_main.html',
+                            logged_in=False,
+                            user_name='',
+                            user_picture='',
+                            recent_music_list=[],
+                            popular_music_list=[])
+
 
 @app.route('/generation-complete')
 def generation_complete():
@@ -595,7 +657,6 @@ def generation_complete():
     return render_template('generation_complete.html', music_id=music_id)
 
 
-# 나머지 라우트들은 기존과 동일...
 @app.route('/upload', methods=['POST'])
 def upload_file():
     """음악 파일 업로드 처리"""
@@ -847,6 +908,168 @@ def debug_backend_test():
         })
     except Exception as e:
         return jsonify({'error': str(e)})
+
+
+@app.route('/api/music/<int:music_id>/like', methods=['POST'])
+def like_music(music_id):
+    """음악 좋아요 추가"""
+    try:
+        # 로그인 확인
+        if not is_user_logged_in():
+            return jsonify({
+                'success': False,
+                'message': '로그인이 필요합니다.'
+            }), 401
+        
+        # 백엔드 연결 시도
+        if check_backend_connection():
+            try:
+                headers = get_auth_headers()
+                response = requests.post(
+                    f'{BACKEND_API_URL}/music/{music_id}/like',
+                    headers=headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    return jsonify(result)
+                else:
+                    result = response.json()
+                    return jsonify(result), response.status_code
+                    
+            except requests.RequestException as e:
+                print(f"백엔드 좋아요 요청 오류: {e}")
+        
+        # 백엔드 연결 실패 시 오류 반환
+        return jsonify({
+            'success': False,
+            'message': '백엔드 서버에 연결할 수 없습니다.'
+        }), 503
+        
+    except Exception as e:
+        print(f"좋아요 추가 오류: {e}")
+        return jsonify({
+            'success': False,
+            'message': '좋아요 처리 중 오류가 발생했습니다.'
+        }), 500
+
+
+@app.route('/api/music/<int:music_id>/like', methods=['DELETE'])
+def unlike_music(music_id):
+    """음악 좋아요 취소"""
+    try:
+        # 로그인 확인
+        if not is_user_logged_in():
+            return jsonify({
+                'success': False,
+                'message': '로그인이 필요합니다.'
+            }), 401
+        
+        # 백엔드 연결 시도
+        if check_backend_connection():
+            try:
+                headers = get_auth_headers()
+                response = requests.delete(
+                    f'{BACKEND_API_URL}/music/{music_id}/like',
+                    headers=headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    return jsonify(result)
+                else:
+                    result = response.json()
+                    return jsonify(result), response.status_code
+                    
+            except requests.RequestException as e:
+                print(f"백엔드 좋아요 취소 요청 오류: {e}")
+        
+        # 백엔드 연결 실패 시 오류 반환
+        return jsonify({
+            'success': False,
+            'message': '백엔드 서버에 연결할 수 없습니다.'
+        }), 503
+        
+    except Exception as e:
+        print(f"좋아요 취소 오류: {e}")
+        return jsonify({
+            'success': False,
+            'message': '좋아요 취소 중 오류가 발생했습니다.'
+        }), 500
+
+
+@app.route('/api/playlist', methods=['GET'])
+def api_get_playlist():
+    """API - 전체 플레이리스트 조회"""
+    try:
+        # 백엔드 연결 시도
+        if check_backend_connection():
+            try:
+                headers = get_auth_headers()
+                response = requests.get(
+                    f'{BACKEND_API_URL}/playlist',
+                    headers=headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    return jsonify(response.json())
+                else:
+                    print(f"백엔드 플레이리스트 오류: {response.status_code}")
+                    
+            except requests.RequestException as e:
+                print(f"백엔드 플레이리스트 요청 오류: {e}")
+        
+        # 백엔드 연결 실패 시 오류 반환
+        return jsonify({
+            'success': False,
+            'message': '백엔드 서버에 연결할 수 없습니다.'
+        }), 503
+        
+    except Exception as e:
+        print(f"API 플레이리스트 오류: {e}")
+        return jsonify({
+            'success': False,
+            'message': '플레이리스트 조회 중 오류가 발생했습니다.'
+        }), 500
+
+
+@app.route('/api/popular-playlist', methods=['GET'])
+def api_get_popular_playlist():
+    """API - 인기 플레이리스트 조회"""
+    try:
+        # 백엔드 연결 시도
+        if check_backend_connection():
+            try:
+                headers = get_auth_headers()
+                response = requests.get(
+                    f'{BACKEND_API_URL}/popular-playlist',
+                    headers=headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    return jsonify(response.json())
+                else:
+                    print(f"백엔드 인기 플레이리스트 오류: {response.status_code}")
+                    
+            except requests.RequestException as e:
+                print(f"백엔드 인기 플레이리스트 요청 오류: {e}")
+        
+        # 백엔드 연결 실패 시 오류 반환
+        return jsonify({
+            'success': False,
+            'message': '백엔드 서버에 연결할 수 없습니다.'
+        }), 503
+        
+    except Exception as e:
+        print(f"API 인기 플레이리스트 오류: {e}")
+        return jsonify({
+            'success': False,
+            'message': '인기 플레이리스트 조회 중 오류가 발생했습니다.'
+        }), 500
 
 
 if __name__ == '__main__':
