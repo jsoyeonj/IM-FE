@@ -428,8 +428,7 @@ def generate_music_from_image():
 
 @app.route('/generate-music-from-video', methods=['POST'])
 def generate_music_from_video():
-    """동영상 기반 음악 생성"""
-    # 이미지 처리와 동일한 로직 적용
+    """동영상 기반 음악 생성 - 백엔드 우선 호출"""
     try:
         if 'video' not in request.files:
             return jsonify({
@@ -453,7 +452,57 @@ def generate_music_from_video():
                 'error': '허용되지 않는 파일 형식입니다'
             }), 400
 
-        # 로컬 처리 (백엔드 없이)
+        # 백엔드 연결 시도
+        if check_backend_connection():
+            try:
+                print("🔄 백엔드 API 호출 시도 - 동영상 기반 음악 생성")
+                
+                # 파일을 메모리에서 다시 읽기 위해 시작 위치로 이동
+                video_file.seek(0)
+                
+                files = {'video': (video_file.filename, video_file, video_file.content_type)}
+                headers = {}
+                
+                # JWT 토큰이 있으면 추가
+                if 'access_token' in session:
+                    headers['Authorization'] = f'Bearer {session["access_token"]}'
+
+                response = requests.post(
+                    f'{BACKEND_API_URL}/generate-music/video',
+                    files=files,
+                    headers=headers,
+                    timeout=120  # 동영상은 처리 시간이 더 길 수 있음
+                )
+
+                print(f"📊 백엔드 응답: {response.status_code}")
+
+                if response.status_code == 200:
+                    result = response.json()
+                    if result.get('success'):
+                        music_data = result.get('data', {})
+                        music_id = str(uuid.uuid4())
+
+                        print(f"✅ 백엔드 동영상 음악 생성 성공: {music_data.get('title')}")
+
+                        return jsonify({
+                            'success': True,
+                            'music_id': music_id,
+                            'music_url': music_data.get('musicUrl'),
+                            'title': music_data.get('title'),
+                            'redirect_url': url_for('generation_complete', music_id=music_id)
+                        })
+                        
+            except requests.RequestException as e:
+                print(f"💥 백엔드 요청 실패: {str(e)}")
+            except Exception as e:
+                print(f"💥 백엔드 처리 실패: {str(e)}")
+
+        # 백엔드 실패시 로컬 처리
+        print("🏠 로컬 동영상 처리 모드로 전환")
+        
+        # 파일을 다시 시작 위치로 이동
+        video_file.seek(0)
+        
         filename = secure_filename(video_file.filename)
         video_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         video_file.save(video_path)
@@ -478,6 +527,8 @@ def generate_music_from_video():
         music_list.append(new_music)
         save_music_data(music_list)
 
+        print(f"🏠 로컬 동영상 음악 생성 완료: {title}")
+
         return jsonify({
             'success': True,
             'music_id': music_id,
@@ -485,6 +536,7 @@ def generate_music_from_video():
         })
 
     except Exception as e:
+        print(f"🚨 동영상 음악 생성 오류: {str(e)}")
         return jsonify({
             'success': False,
             'error': f'서버 오류: {str(e)}'
