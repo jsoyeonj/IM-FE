@@ -44,8 +44,23 @@
             top: 20px;
             right: 30px;
             display: flex;
-            gap: 15px;
+            flex-direction: column;
+            gap: 10px;
             z-index: 100;
+            align-items: flex-end;
+        }
+
+        /* 첫 번째 줄: 사용자 정보, 내 작업곡, 로그아웃 */
+        .header-menu-top {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        /* 두 번째 줄: 다른 사람 음악도 들어볼래요 버튼 */
+        .header-menu-bottom {
+            display: flex;
+            justify-content: flex-end;
         }
 
         .header-menu a {
@@ -56,6 +71,7 @@
             border-radius: 20px;
             background-color: rgba(255, 255, 255, 0.8);
             transition: background-color 0.3s;
+            white-space: nowrap;
         }
 
         .header-menu a:hover {
@@ -78,24 +94,94 @@
             height: 24px;
             border-radius: 50%;
         }
+
+        /* 새로 추가된 "다른 사람 음악도 들어볼래요" 버튼 스타일 */
+        .playlist-main-btn {
+            color: #513d6c;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 15px;
+            border-radius: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .playlist-main-btn:hover {
+            background-color: white;
+        }
+
+        /* 반응형 스타일 */
+        @media (max-width: 768px) {
+            .header-menu {
+                right: 15px;
+                top: 15px;
+                gap: 8px;
+            }
+
+            .header-menu-top {
+                gap: 10px;
+            }
+
+            .header-menu a,
+            .user-profile,
+            .playlist-main-btn {
+                font-size: 0.9rem;
+                padding: 6px 12px;
+            }
+
+            .playlist-main-btn {
+                font-size: 0.8rem;
+                padding: 6px 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-menu {
+                gap: 5px;
+            }
+
+            .header-menu-top {
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+
+            .playlist-main-btn {
+                font-size: 0.75rem;
+                padding: 5px 8px;
+            }
+        }
     </style>
 </head>
 <body>
     {% if request.path != '/' and request.path != '/login' %}
     <div class="header-menu">
         {% if logged_in %}
-            <div class="user-profile">
-                {% if user_picture %}
-                <img src="{{ user_picture }}" alt="프로필">
-                {% else %}
-                <img src="{{ url_for('static', filename='images/user.png') }}" alt="프로필">
-                {% endif %}
-                <span>{{ user_name }}</span>
+            <!-- 첫 번째 줄: 사용자 정보, 내 작업곡, 로그아웃 -->
+            <div class="header-menu-top">
+                <div class="user-profile">
+                    {% if user_picture %}
+                    <img src="{{ user_picture }}" alt="프로필">
+                    {% else %}
+                    <img src="{{ url_for('static', filename='images/user.png') }}" alt="프로필">
+                    {% endif %}
+                    <span>{{ user_name }}</span>
+                </div>
+                <a href="{{ url_for('playlist') }}">내 작업곡</a>
+                <a href="{{ url_for('logout') }}">로그아웃</a>
             </div>
-            <a href="{{ url_for('playlist') }}">내 작업곡</a>
-            <a href="{{ url_for('logout') }}">로그아웃</a>
+            <!-- 두 번째 줄: 다른 사람 음악도 들어볼래요 버튼 -->
+            <div class="header-menu-bottom">
+                <a href="{{ url_for('playlist_main') }}" class="playlist-main-btn">다른 사람 음악도 들어볼래요</a>
+            </div>
         {% else %}
-            <a href="{{ url_for('login') }}">로그인</a>
+            <!-- 비로그인 상태: 한 줄에 배치 -->
+            <div class="header-menu-top">
+                <a href="{{ url_for('login') }}">로그인</a>
+            </div>
+            <div class="header-menu-bottom">
+                <a href="{{ url_for('playlist_main') }}" class="playlist-main-btn">다른 사람 음악도 들어볼래요</a>
+            </div>
         {% endif %}
     </div>
     {% endif %}
