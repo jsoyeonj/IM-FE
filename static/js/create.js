@@ -203,7 +203,7 @@ function showMessage(message, type) {
     messageDiv.className = `message ${type}`;
     messageDiv.textContent = message;
 
-    // body에 메시지 추가
+    // body에 메시지 추가하기
     document.body.appendChild(messageDiv);
 
     // 메시지 표시 애니메이션
